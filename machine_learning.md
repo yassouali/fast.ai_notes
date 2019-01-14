@@ -556,7 +556,7 @@ fi = rf_feat_importance(m, x)
 
 And the results are:
 
-<p align="center"> <img src="figures/tree_interpretation.png" width="700"> </p>
+<p align="center"> <img src="figures/feature_importance_extrapolation.png" width="200"> </p>
 
 Now we can remove the most relevent features from the dataframe, and retrain our random forest, and we end up with a very good results.
 
