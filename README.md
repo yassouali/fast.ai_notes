@@ -2,7 +2,7 @@
 
 ## Introduction to Machine Learning for Coders:
 * Course [Link](https://course.fast.ai/ml) - [Github repo](https://github.com/fastai/fastai/tree/master/courses/ml1) - [Youtube playlist](https://www.youtube.com/playlist?list=PLdU_yAhDwVefmKny848HTdvNSbdN_eS-B)
-* Notes: [Lec 1](intro_to_ML/lecture1.md) - [Lec 2](intro_to_ML/lecture2.md) - [Lec 3](intro_to_ML/lecture3.md) - [Lec 4](intro_to_ML/lecture4.md) - [Lec 5](intro_to_ML/lecture5.md) - [Lec 6](intro_to_ML/lecture6.md) - [Lec 7](intro_to_ML/lecture7.md) - [Lec 8](intro_to_ML/lecture8.md) - [Lec 9/10](intro_to_ML/lecture9_10.md) - [Lec 11](intro_to_ML/lecture11.md)- [Lec 12](intro_to_ML/lecture12.md).
+* Notes: [Lec 1](intro_to_ML/lecture1.md) - [Lec 2](intro_to_ML/lecture2.md) - [Lec 3](intro_to_ML/lecture3.md) - [Lec 4](intro_to_ML/lecture4.md) - [Lec 5](intro_to_ML/lecture5.md) - [Lec 6](intro_to_ML/lecture6.md) - [Lec 7](intro_to_ML/lecture7.md) - [Lec 8](intro_to_ML/lecture8.md) - [Lec 9/10](intro_to_ML/lecture9_10.md) - [Lec 11](intro_to_ML/lecture11.md).
 
 ## Practical Deep Learning for Coders (2018):
 * Course [Link](https://course.fast.ai/ml) - [Github repo](https://github.com/fastai/fastai/tree/master/courses/dl1) - [Youtube playlist]()

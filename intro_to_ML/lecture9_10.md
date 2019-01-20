@@ -24,7 +24,9 @@ In the begining of the training we might see that the error in the training set 
 
 ## NLP
 
-In this simple approach, we'll first discard the order of the words, and only use their frequency in the corpus, this is done using term document matrix, which count the number of appearances of each word (feature) in the document, so the size of this matrix is # Document x # Number of unique words, the unique words are obtained by tokenizing all the words in the corpus (*this "movie" isn't good*. *becomes this " movie " is n't good .*).
+In this simple approach, we'll first discard the order of the words, and only use their frequency in the corpus, this is done using term document matrix, which count the number of appearances of each word (feature) in the document, so the size of this matrix is # Document x # Number of unique words, the unique words are obtained by tokenizing all the words in the corpus (*this "movie" isn't good*. *becomes this " movie " is n't good .*). First we'll only use unigrams.
+
+<p align="center"> <img src="../figures/bag_of_words.png" width="450"> </p>
 
 We first need to create the training and validation set using the text files provided in the IMDB sentiment analysis dataset. We have two folder one for training examples, and one for validation/test, in each one we have neg and pos examples, so for train examples, we go through the negatives add them to train_text and append zeros (idx) for all of them, same of pos but with label 1.
 
@@ -67,19 +69,20 @@ The probability that a document is from class 1 given that the document is from 
 $$ \frac{P(C_1 | d)}{P(C_0 | d)} = \frac {P(d|C_1)P(C_1)}{P(d)} = \frac {P(d)}{P(d|C_0)P(C_0)}$$
 $$ \frac{P(C_1 | d)}{P(C_0 | d)} = \frac {P(d|C_1)P(C_1)}{P(d|C_0)P(C_0)}$$
 
-And the **log-count ratio** r for each word f:
 
-$$r = \log \frac{\text{ratio of feature\ f in positive documents}}{\text{ratio of feature\ f in negative documents}}$$
-
-How do we calculate?
+How do we calculate it?
 
 * We calculate p(C=0) and p(C=1) using the number of positive and negative example in the dataset, in this case we have 12500/12500 so P = 0.5 for both classes.
 * Now we need to calculate P(d|C1) and P(d|C0), given that each document contains a set of features, and with the assumption the features are independent, we only need to find P(f|C1) and P(f|C0) and multiply them:
     * P(f|C0) = (number of appearances of the features in the positives + 1) / (number of in the positives in the set + 1), we add one beacause we want to avoid having 0 probability, beacuse there is always a small possibility that a word will be in a given document.
     * And then we multiply them together if the feature is a given doc : with P(dj|C1) = P(fi|C1) x term_doc(dj, fi).
-* We multiply a number of probablities together, so to avoid numerical instability we use the log ratio:
+* We multiply a number of probablities together, so to avoid numerical instability we use the log of the expression:
   
-$$ log r = log \frac {P(d|C_1)}{P(d|C_0)} + log \frac {P(C_1)}{P(C_0)}$$
+$$ \log \frac{P(C_1 | d)}{P(C_0 | d)} = \log \frac {P(d|C_1)}{P(d|C_0)} + \log \frac {P(C_1)}{P(C_0)} = val\_term\_doc \times r +  b $$
+
+And the **log-count ratio** r for each word f:
+
+$$r = \log \frac{\text{ratio of feature\ f in positive documents}}{\text{ratio of feature\ f in negative documents}} = \log \frac {P(f|C_1)}{P(f|C_0)}$$
 
 ```python
 def pr(y_i):
