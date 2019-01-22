@@ -1,7 +1,5 @@
-
-
-
 ### Finding an optimal learning rate
+
 How do we select the “right” learning rate to start training our model? This question is a heavily debated one in deep learning and fast.ai offers a solution based on a paper from Leslie Smith - Cyclical Learning Rates for training Neural Networks.
 
 <p align="center"> <img src="../figures/cyclic_learning_rate.png" width="250"> </p>
@@ -17,7 +15,7 @@ The idea of the paper is quite simple:
 
 In the figure above, we see that when we increase the learning rate beyond a certain treshold, the loss goes up, this is when we stop our training and choose the lr that gave us the steepest decrease of the loss.
 
-#### learning rate annealing
+### learning rate annealing
 
 In training deep networks, it is usually helpful to anneal the learning rate over time. Good intuition to have in mind is that with a high learning rate, the system contains too much kinetic energy and the parameter vector bounces around chaotically, unable to settle down into deeper, but narrower parts of the loss function. Knowing when to decay the learning rate can be tricky: Decay it slowly and we'll be wasting computation bouncing around chaotically with little improvement for a long time. But decay it too aggressively and the system will cool too quickly, unable to reach the best position it can. There are three common types of implementing the learning rate decay:
 
@@ -29,7 +27,7 @@ In training deep networks, it is usually helpful to anneal the learning rate ove
 
 In practice, we find that the step decay is slightly preferable because the hyperparameters it involves (the fraction of decay and the step timings in units of epochs) are more interpretable than the hyperparameter k. Lastly, if we can afford the computational budget, err on the side of slower decay and train for a longer time.
 
-#### stochastic gradient descent with restarts (SGDR)
+### stochastic gradient descent with restarts (SGDR)
 
 With lr annealing, we may find ourselves in a part of the weight space that isn’t very resilient — that is, small changes to the weights may result in big changes to the loss. We want to encourage our model to find parts of the weight space that are both accurate and stable. Therefore, from time to time we increase the learning rate (this is the ‘restarts’ in ‘SGDR’), which will force the model to jump to a different part of the weight space if the current area is “spiky”. Here’s a picture of how that might look if we reset the learning rates 3 times (in this paper they call it a “cyclic LR schedule”):
 
@@ -51,7 +49,7 @@ In the figure above, we do three cycles, the original length of the cycle is one
 
 Intuitively speaking, if the cycle length is too short, it starts going down to find a good spot, then pops out, and goes down trying to find a good spot and pops out, and never actually get to find a good spot. Earlier on, we want it to do that because it is trying to find a spot that is smoother, but later on, we want it to do more exploring. That is why cycle_mult=2 seems to be a good approach.
 
-# Learning rate and fine tuning (differential learning rate annealing)
+### Learning rate and fine tuning (differential learning rate annealing)
 When using a pretrained model, we can freeze the weights of all the previous layers but the last one, so we only combine the learned features that the model is capable of outputing and use them to classify our inputs.
 
 Now if we want to fine tune the earlier layers to be more specific to our dataset, and only detect the fetures that will actualy help us, we can use diffent learning rates for each layers.
