@@ -39,21 +39,21 @@ As per usual, we will start by creating model data object which has a validation
 
 The continus variables are directly fed in to the network, now for the categorical variables, instead of representing them as one hot vectors, we'll embedd into a lower space, using different emebedding matrices depending on the cardinality of the categories of each column, for example, the categories we have and their cardinality :
 
-'''python
+```python
 [('Store', 1116),  ('DayOfWeek', 8),  ('Year', 4),  ('Month', 13),  ('Day', 32),  ('StateHoliday', 3),  ('CompetitionMonthsOpen', 26),  ('Promo2Weeks', 27),  ('StoreType', 5),  ('Assortment', 4),  ('PromoInterval', 4),  ('CompetitionOpenSinceYear', 24),  ('Promo2SinceYear', 9),  ('State', 13),  ('Week', 53),  ('Events', 22),  ('Promo_fw', 7),  ('Promo_bw', 7),  ('StateHoliday_fw', 4),  ('StateHoliday_bw', 4),  ('SchoolHoliday_fw', 9),  ('SchoolHoliday_bw', 9)]
-'''
+```
 
 Now depending on the cardinality of each one cat we'll chose an embedding size, with a max of 50:
 
-'''python
+```python
 emb_szs = [(c, min(50, (c+1)//2)) for _,c in cat_sz]
 
 [(1116, 50),  (8, 4),  (4, 2),  (13, 7),  (32, 16),  (3, 2),  (26, 13),  (27, 14),  (5, 3),  (4, 2),  (4, 2),  (24, 12),  (9, 5),  (13, 7),  (53, 27),  (22, 11),  (7, 4),  (7, 4),  (4, 2),  (4, 2),  (9, 5),  (9, 5)]
-'''
+```
 
 So now we have for each column a specific embedding matrice, we pass all the values of each column per their corresponding matrice, so our model we'll have nb_cat embeddings, each one with the specific size ((1116, 50) ... (9, 5)), so now, per example, all the categorical vars are transformed into vectors (50 ..... 5), the total size of all of them cancatenated is 185, now we add the numerical values of the continus variables which are 185, and the inputs of our model is a vector of size 201, and them we add linear layers (201x100 and then 1000x500), batch norm and dropout.
 
-'''python
+```python
 MixedInputModel(
   (embs): ModuleList(
     (0): Embedding(1116, 50)
@@ -85,7 +85,7 @@ MixedInputModel(
   )
   (bn): BatchNorm1d(18, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
 )
-'''
+```
 
 <p align="center"> <img src="../figures/model_for_non_structured_data.png" width="800"> </p>)
 
