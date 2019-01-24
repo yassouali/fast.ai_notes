@@ -1,8 +1,9 @@
 ### Finding an optimal learning rate
 
-How do we select the “right” learning rate to start training our model? This question is a heavily debated one in deep learning and fast.ai offers a solution based on a paper from Leslie Smith - Cyclical Learning Rates for training Neural Networks.
+How do we select the “right” learning rate to start training our model? This question is a he avily debated one in deep learning and fast.ai offers a solution based on a paper from Leslie Smith - Cyclical Learning Rates for training Neural Networks.
 
 <p align="center"> <img src="../figures/cyclic_learning_rate.png" width="250"> </p>
+
 
 The idea of the paper is quite simple:
 
@@ -62,18 +63,63 @@ And we can see that this kind of approach help us find better local minimas with
 
 <p align="center"> <img src="../figures/loss_with_cyclic_lr.png" width="300"> </p>
 
+### Cycling Learning Rate
 
-## How to terain a state of the art classifier:
+#### One LR for all parameters
+Typically seen in SGD, a single LR is set at the beginning of the training, and an LR decay strategy is set (step, exponential etc.). This single LR is used to update all parameters. It is gradually decayed with each epoch with the assumption that with time, we reach near to the desired minima, upon which we need to slow down the updates so as not to overshoot it.
+
+<p align="center"> <img src="../figures/Lr_levels.jpeg" width="200"> </p>)
+
+There are many challenges to this approach (refer):
+
+* Choosing an initial LR can be difficult to set in advance (as depicted in above figure).
+* Setting an LR schedule (LR update mechanism to decay it over time) is also difficult to be set in advance. They do not adapt to dynamics in data.
+* The same LR gets applied to all parameters which might be learning at different rates.
+* It is very hard to get out of a saddle point. See below.
+
+#### Adaptive LR for each parameter
+Improved optimizers like AdaGrad, AdaDelta, RMSprop and Adam alleviate much of the above challenges by adapting learning rates for each parameters being trained. With Adadelta, we do not even need to set a default learning rate, as it has been eliminated from the update rule.
+<p align="center"> <img src="../figures/adaptative_lr.gif" width="300"> </p>)
+
+#### Cycling Learning Rate
+
+CLR was proposed by Leslie Smith in 2015. It is an approach to LR adjustments where the value is cycled between a lower bound and upper bound. By nature, it is seen as a competitor to the adaptive LR approaches and hence used mostly with SGD. But it is possible to use it along with the improved optimizers (mentioned above) with per parameter updates.
+
+CLR is computationally cheaper than the optimizers mentioned above. As the paper says:
+*Adaptive learning rates are fundamentally different from CLR policies, and CLR can be combined with adaptive learning rates, as shown in Section 4.1. In addition, CLR policies are computationally simpler than adaptive learning rates. CLR is likely most similar to the SGDR method that appeared recently.*
+
+#### Why it works ?
+As far as intuition goes, conventional wisdom says we have to keep decreasing the LR as training progresses so that we converge with time.
+
+However, counterintuitively it might be useful to periodically vary the LR between a lower and higher threshold. The reasoning is that the periodic higher learning rates within the training help the model come out of any local minimas or saddle points if it ever enters into one, given that the difficulty in minimizing the loss arises from saddle points rather than poor local minima. If the saddle point happens to be an elaborate plateau, lower learning rates can never generate enough gradient to come out of it (or will take enormous time). That’s where periodic higher learning rates help with more rapid traversal of the surface.
+
+<p align="center"> <img src="../figures/saddle_points.png" width="300"> </p>)
+
+A second benefit is that the optimal LR appropriate for the error surface of the model will in all probability lie between the lower and higher bounds as discussed above. Hence we do get to use the best LR when amortized over time.
+
+#### Epoch, iterations, cycles and stepsize
+An epoch is one run of your training algorithm across the entire training set. If we set a batch size of 100, we get 500 batches in 1 epoch or 500 iterations. The iteration count is accumulated over epochs, so that in epoch 2, we get iterations 501 to 1000 for the same batch of 500, and so one.
+
+With that in mind, a cycle is defined as that many iterations where we want our learning rate to go from a base learning rate to a max learning rate, and back. And a stepsize is half of a cycle. Note that a cycle, in this case, need not fall on the boundary of an epoch, though in practice it does.
+
+<p align="center"> <img src="../figures/triangular_lr.png" width="300"> </p>)
+
+In the above diagram, we set a base lr and max lr for the algorithm, demarcated by the red lines. The blue line suggests the way learning rate is modified (in a triangular fashion), with the x-axis being the iterations. A complete up and down of the blue line is one cycle. And stepsize is half of that.
+
+* Deriving the optimal base lr and max lr: An optimal lower and upper bound of the learning rate can be found by letting the model run for a few epochs, letting the learning rate increase linearly and monitoring the accuracy. We run a complete step by setting stepsize equal to num_iterations (This will make the LR increase linearly and stop as num_iterations is reached). We also set base lr to a minimum value and max lr to a maximum value that we deem fit.
+* Deriving the optimal cycle length (or stepsize): The paper suggests, after experimentation, that the stepsize be set to 2-10 times the number of iterations in an epoch. In the previous example, since we had 500 iterations per epoch, setting stepsize from 1000 to 5000 would do. The paper found not much difference in setting stepsize to 2 times num of iterations in an epoch than 8 times so.
+
+## How to terain a state of the art classifier :
 
 1. Use data augmentation and pretrained models
-1. Use Cyclical Learning Rates to find highest learning rate where loss is still clearly improving
-1. Train last layer from precomputed activations for 1-2 epochs
-1. Train last layer with data augmentation for 2-3 epochs with stochastic gradient descent with restarts
-1. Unfreeze all layers
-1. Set earlier layers to 3x-10x lower learning rate than next higher layer
-1. Use Cyclical Learning Rates again
-1. Train full network with stochastic gradient descent with restarts with varying length until over-fitting
+2. Use Cyclical Learning Rates to find highest learning rate where loss is still clearly improving
+3. Train last layer from precomputed activations for 1-2 epochs
+4. Train last layer with data augmentation for 2-3 epochs with stochastic gradient descent with restarts
+5. Unfreeze all layers
+6. Set earlier layers to 3x-10x lower learning rate than next higher layer
+7. Use Cyclical Learning Rates again
+8. Train full network with stochastic gradient descent with restarts with varying length until over-fitting
 
-
-### References:
+#### References:
 * [FastAi lecture 2 notes](https://medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-2-eeae2edd2be4)
+* [The Cyclical Learning Rate technique](http://teleported.in/posts/cyclic-learning-rate/)
