@@ -83,11 +83,10 @@ MixedInputModel(
     (0): Dropout(p=0.001)
     (1): Dropout(p=0.01)
   )
-  (bn): BatchNorm1d(18, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-)
+  (bn): BatchNorm1d(18, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True))
 ```
 
-<p align="center"> <img src="../figures/model_for_non_structured_data.png" width="800"> </p>)
+<p align="center"> <img src="../figures/model_for_non_structured_data.png" width="800"> </p>
 
 ### NLP
 
@@ -238,7 +237,7 @@ class LockedDropout(nn.Module):
         return mask * x
 ```
 
-<p align="center"> <img src="../figures/nlp_model.png" width="450"> </p>
+<p align="center"> <img src="../figures/NLP_model.png" width="450"> </p>
 
 ```python
 SequentialRNN(
@@ -268,15 +267,14 @@ SequentialRNN(
   (1): LinearDecoder(
     (decoder): Linear(in_features=200, out_features=13458, bias=False)
     (dropout): LockedDropout()
-  )
-)
+  ))
 ```
 
 #### Sentiment
 
 Now we can use the pretrained language model above, and fine tune it for sentiment analysis, but first of all we need to modify the last layer of the model, instead of using an linear decoder for each ouput in the sequence, this time, the RNN will not be many to many, but many to one, so we'll only use the last output, so we can either only calculate the loss using the last output of the RNN, or add a linear layer that takes and last hidden layer and gives us P, P>0.5 if the input is POS and NEG otherwise. the last linear layer will take as input 600-vectors, given that the we have three layer and each one is of each hidden state is 200.
 
-<p align="center"> <img src="../figures/nlp_model_sentiment.png" width="450"> </p>
+<p align="center"> <img src="../figures/NLP_model_sentiment.png" width="450"> </p>
 
 And the model is:
 
