@@ -136,17 +136,195 @@ doc = nlp("Barack Obama is an American politician")
 ''' OUT -> [(Barack Obama, 'PERSON', 346), (American, 'NORP', 347)]'''
 ```
 
+### Data 
+
+The [large movie view dataset](http://ai.stanford.edu/~amaas/data/sentiment/) contains a collection of 50,000 reviews from IMDB. The dataset contains an even number of positive and negative reviews. A negative review has a score ≤ 4 out of 10, and a positive review has a score ≥ 7 out of 10. Neutral reviews are not included in the dataset. The dataset is divided into training and test sets. The training set is the same 25,000 labeled reviews.
+
+The **sentiment classification task** consists of predicting the polarity (positive or negative) of a given text. However, before we try to classify *sentiment*, we will simply try to create a *language model*; that is, a model that can predict the next word in a sentence. Because our model first needs to understand the structure of English, before we can expect it to recognize positive vs negative sentiment.
+
+First we'll use a similar approach to the one used in image classification, pretrain a model to do one thing (predict the next word), and fine tune it to do something else (classify sentiment).
+
+Unfortunately, given that there aren't any good pretrained language models available to download, we need to create our own. [Dataset](http://files.fast.ai/data/aclImdb.tgz) download link.
+
+#### Preprocessing
+Before we can analyze text, we must first tokenize it. This refers to the process of splitting a sentence into an array of words (or more generally, into an array of tokens).
+
+We use Pytorch's `torchtext` library to preprocess our data. First, we create a torchtext field, which describes how to preprocess a piece of text, in this case, we tell torchtext to make everything lowercase, and tokenize it with `spacy` (or NLTK).
+
+```python
+TEXT = data.Field(lower=True, tokenize="spacy")
+```
+
+We can then save it using `dill`, given python's standard `Pickle` library can't handle this correctly
+
+```python
+dill.dump(TEXT, open(f'{PATH}models/TEXT.pkl','wb'))
+```
+
+**About** [Dill](https://pypi.org/project/dill/): dill extends python’s pickle module for serializing and de-serializing python objects to the majority of the built-in python types. Serialization is the process of converting an object to a byte stream, and the inverse of which is converting a byte stream back to on python object hierarchy.
+
+We can also acces and constructed vocabulary, and also numericalize the words:
+
+```python
+# 'itos': 'int-to-string'
+TEXT.vocab.itos[:12]
+>>> ['<unk>', '<pad>', 'the', ',', '.', 'and', 'a', 'of', 'to', 'is', 'it', 'in']
+
+TEXT.numericalize([md.trn_ds[0].text[:12]])
+>>> Variable containing:    12    35   227   480    13    76    17     2  7319   769     3     2 [torch.cuda.LongTensor of size 12, 1 (GPU 0)]
+```
+
+Now, we need to construct our data into batches to feed it to the model, we choose batches of size 64, and a length of 70 (for back propagating through time), so each batch will contain ~ 70 words, it varies, beacuse pytorch adds some randomizing to the process, it vision we can shuffle the images but in NLP the order is important.
+
+So first we start by taking our whole dataset, tolenize it (all the 50,000 texts, both POS and NEG), and then take all the words (~20M) and group them into 64 sections, and each time we take a window of 70 words for our tarining, and the labels are the same batch but shifted one word to the right, given that the objective is to predict the upcomming word (.
+
+<p align="center"> <img src="../figures/nlp_batches.png" width="700"> </p>)
 
 
-python -m spacy download en
-language modeling  
+And if we see the size of the batches, and display the words by sampling one example of the data loader, we get:
+```python
+next(iter(md.trn_dl))[0].size()
+# Batch sizes
+torch.Size([71, 64])
 
-! find command seems very interesting
+next(iter(md.trn_dl))
+# Input and target, the target is flattened for ease computation
+(Variable containing:
+     12    567      3  ...    2118      4   2399
+     35      7     33  ...       6    148     55
+    227    103    533  ...    4892     31     10
+         ...            ⋱           ...         
+     19   8879     33  ...      41     24    733
+    552   8250     57  ...     219     57   1777
+      5     19      2  ...    3099      8     48
+ [torch.cuda.LongTensor of size 77,64 (GPU 0)], Variable containing:
+     35
+      7
+     33
+   ⋮   
+     22
+   3885
+  21587
+ [torch.cuda.LongTensor of size 4928 (GPU 0)])
+```
 
-tokenization spacy tok
+### The model
+We have a number of parameters to set.
+```python
+em_sz = 200  # size of each embedding vector
+nh = 500     # number of hidden activations per layer
+nl = 3       # number of layers
+```
 
-text mapping
+Researchers have found that large amounts of momentum (which we'll learn about later) don't work well with these kinds of RNN models, so we create a version of the Adam optimizer with less momentum than it's default of 0.9.
+```python
+opt_fn = partial(optim.Adam, betas=(0.7, 0.99))
+```
 
+fastai uses a variant of the state of the art [AWD LSTM Language Model](https://arxiv.org/abs/1708.02182) developed by Stephen Merity. A key feature of this model is that it provides excellent regularization through Dropout.
+
+The model first contains an embedding matrix, that takes as inputs one hot encodings (the size of the vocabulary), and ouputs 200-encondings for each word, and then we pass the 200-vector throught three layers of LSTM (200x500 -> 500x500 -> 500x200) endings up with a new 200-vector encoding, which will hopfully be the coresponding to the next word, so we use a linear decoder to get the probability distribution over all the words in the vocabulary, and in between we use LockedDropout() proposed in [AWD LSTM](https://arxiv.org/abs/1708.02182).
+
+```python
+class LockedDropout(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, x, dropout=0.5):
+        if not self.training or not dropout:
+            return x
+        m = x.data.new(1, x.size(1), x.size(2)).bernoulli_(1 - dropout)
+        mask = Variable(m, requires_grad=False) / (1 - dropout)
+        mask = mask.expand_as(x)
+        return mask * x
+```
+
+<p align="center"> <img src="../figures/nlp_model.png" width="450"> </p>
+
+```python
+SequentialRNN(
+  (0): RNN_Encoder(
+    (encoder): Embedding(13458, 200, padding_idx=1)
+    (encoder_with_dropout): EmbeddingDropout(
+      (embed): Embedding(13458, 200, padding_idx=1)
+    )
+    (rnns): ModuleList(
+      (0): WeightDrop(
+        (module): LSTM(200, 500, dropout=0.05)
+      )
+      (1): WeightDrop(
+        (module): LSTM(500, 500, dropout=0.05)
+      )
+      (2): WeightDrop(
+        (module): LSTM(500, 200, dropout=0.05)
+      )
+    )
+    (dropouti): LockedDropout()
+    (dropouths): ModuleList(
+      (0): LockedDropout()
+      (1): LockedDropout()
+      (2): LockedDropout()
+    )
+  )
+  (1): LinearDecoder(
+    (decoder): Linear(in_features=200, out_features=13458, bias=False)
+    (dropout): LockedDropout()
+  )
+)
+```
+
+#### Sentiment
+
+Now we can use the pretrained language model above, and fine tune it for sentiment analysis, but first of all we need to modify the last layer of the model, instead of using an linear decoder for each ouput in the sequence, this time, the RNN will not be many to many, but many to one, so we'll only use the last output, so we can either only calculate the loss using the last output of the RNN, or add a linear layer that takes and last hidden layer and gives us P, P>0.5 if the input is POS and NEG otherwise. the last linear layer will take as input 600-vectors, given that the we have three layer and each one is of each hidden state is 200.
+
+<p align="center"> <img src="../figures/nlp_model_sentiment.png" width="450"> </p>
+
+And the model is:
+
+```python
+SequentialRNN(
+  (0): MultiBatchRNN(
+    (encoder): Embedding(13458, 200, padding_idx=1)
+    (encoder_with_dropout): EmbeddingDropout(
+      (embed): Embedding(13458, 200, padding_idx=1)
+    )
+    (rnns): ModuleList(
+      (0): WeightDrop(
+        (module): LSTM(200, 500, dropout=0.3)
+      )
+      (1): WeightDrop(
+        (module): LSTM(500, 500, dropout=0.3)
+      )
+      (2): WeightDrop(
+        (module): LSTM(500, 200, dropout=0.3)
+      ))
+    (dropouti): LockedDropout()
+    (dropouths): ModuleList(
+      (0): LockedDropout()
+      (1): LockedDropout()
+      (2): LockedDropout()
+    ))
+  (1): PoolingLinearClassifier(
+    (layers): ModuleList(
+      (0): LinearBlock(
+        (lin): Linear(in_features=600, out_features=1, bias=True)
+        (drop): Dropout(p=0.1)
+        (bn): BatchNorm1d(600, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      ))))
+```
+
+And because we're fine-tuning a pretrained model, we'll use differential learning rates, and also increase the max gradient for clipping, to allow the SGDR to work better. So first we'll fine tune the last layer, and then unfreeze all the layer and use differential learning rates for fine tunning.
+
+```python
+m3.clip=25.
+lrs=np.array([1e-4,1e-4,1e-4,1e-3,1e-2])
+
+m3.freeze_to(-1)
+m3.fit(lrs/2, 1, metrics=[accuracy])
+m3.unfreeze()
+m3.fit(lrs, 1, metrics=[accuracy], cycle_len=1)
+```
+
+Using this approcah, we end up with state of the art resutls in sentiment classification.
 
 #### References:
 * [FastAi lecture 3 notes](https://medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-4-2048a26d58aa)
