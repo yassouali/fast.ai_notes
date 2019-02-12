@@ -81,7 +81,7 @@ preds = np.stack([t.predict(X_valid) for t in m.estimators_]) preds[:,0], np.mea
 
 Each tree is stored in an attribute called `estimators_` . For each tree, we will call predict with our validation set. `np.stack` concatenates them together on a new axis, so the resulting `preds` has the shape of (10, 12000) (10 trees, 12000 validation set). The mean of 10 predictions for the first data is 9.07, and the actual value is 9.10. As you can see, none of the individual prediction is close to 9.10, but the mean ends up pretty good.
 
-<p align="center"> <img src="../figures/R2_random_forest.png" width="500"> </p>
+<p align="center"> <img src="../figures/r2_random_forest.png" width="500"> </p>
 
 Here is a plot of R² values given first i trees. As we add more trees, R² improves. But it seems as though it has flattened out.
 
