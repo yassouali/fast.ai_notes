@@ -59,7 +59,9 @@ Softmax is used only for multi-class cases, in which the inputs is one of M clas
 
 $$F L \left( p _ { t } \right) = - \left( 1 - p _ { t } \right) ^ { \gamma } \log \left( p _ { t } \right)$$
 
-Here we added a new term: (1- pt)^γ, the log loss is calculates as for binary cross entropy, and then the resuls is multiplied by this term, setting γ > 0 reduces the relative loss for well-classified examples (pt > 0.5), putting more focus on hard, misclassified examples. they also add a wight alpha.
+Here we added a new term: (1- pt)^γ, the log loss is calculated using binary cross entropy, and then the resuls are multiplied by this term, setting γ > 0 reduces the relative loss for well-classified examples (pt > 0.5), putting more focus on hard, misclassified examples. they also add a wight alpha.
+
+<p align="center"> <img src="https://cdn-images-1.medium.com/max/1200/1*aAVu_UgA9YrMa9CcapvW1Q.png" width="400"> </p>
 
 ```python
 def Focal_Loss(y_true, y_pred, alpha=0.25, gamma=2):
