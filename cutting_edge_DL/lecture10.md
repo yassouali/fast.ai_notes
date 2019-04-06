@@ -131,7 +131,7 @@ def get_all(df, n_lbls):
 
 First, we load the dataframes we saved, but this time we use a new parameter `chunksize`, this parameter is used in case we have big dataframe and it used to specify the number of rows per chunk to avoid loading them to the memory at once, and in this case, pandas will return an iterator over the data instead of the datafram data directly, giving us a chunck of the data at each iteration, and for this we use a function in which we iterate over the dataframe in the function `get_all` and call the function `get_texts` that will :
 
-<p align="center"> <img src="../figures/dataframe_imdb.png" width="500"> </p>
+<p align="center"> <img src="../figures/df_imdb.png" width="500"> </p>
 
 * First we load the labels and convert them into integers, which is the first column of our dataframe,
 * We add a beginning of stream (BOS) token (any particular strings as long as they don't appear in the corpus) to define the begining of the text, so that after concatenating all the text together, the model will still be able to detect the begining of a new article. And given that in some documents we have multiple field, say an intorduction, and abstract, so to differentiate between then we add a field token, and so first we add the first field (the second column after the label) with a field of 1, and then we add the rest of the field in the document, each one with a given number (2, 3, ...), in our case, we only have movie reviews, so we only have one field, and the loop will pas skiped, and then we apply the fixup function to all the elements.
