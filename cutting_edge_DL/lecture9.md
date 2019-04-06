@@ -317,11 +317,15 @@ class SSD_MultiHead(nn.Module):
                 torch.cat([o1l,o2l,o3l], dim=1)]
 ```
 
+And here is a representation of the model described above by [Chloe Sultan](https://forums.fast.ai/u/chloews)
+
+<p align="center"> <img src="../figures/ssd_architecture.png" width="700"> </p>
+
 And as per usual, we find the learning rate, and train the model, and this time we obtain better resutls:
 
 <p align="center"> <img src="../figures/results_anchors.png" width="500"> </p>
 
-### Focal Loss:
+### Focal Loss :
 
 One problem with a big number of anchors, is the majority of them will belong to the background, and so the loss of the background will overwhelem the losses of the few anchors that do not belong to the backgound, and this will push the model to predict a background unless it is very confident that it is in fact an object of other type, if not, it won't take any chance.
 
