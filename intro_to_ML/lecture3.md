@@ -1,17 +1,27 @@
 
 # Lecture 3
 
-#### Importance of good validation set**
+<!-- TOC -->
 
-If you do not have a good validation set, it is hard, if not impossible, to create a good model. If you are trying to predict next month’s sales and you build models. If you have no way of knowing whether the models you have built are good at predicting sales a month ahead of time, then you have no way of knowing whether it is actually going to be any good when you put your model in production. You need a validation set that you know is reliable at telling you whether or not your model is likely to work well when you put it in production or use it on the test set.
+- [Lecture 3](#lecture-3)
+    - [Importance of good validation set](#importance-of-good-validation-set)
+    - [Interpreting machine learning models](#interpreting-machine-learning-models)
+    - [Confidence in the predictions](#confidence-in-the-predictions)
+        - [Feature importance](#feature-importance)
 
-Normally you should not use your test set for anything other than using it right at the end of the competition or right at the end of the project to find out how you did. But there is one thing you can use the test set for in addition, that is to **calibrate** the validation set.
+<!-- /TOC -->
+
+## Importance of good validation set
+
+If we do not have a good validation set, it is hard, if not impossible, to create a good model. If we are trying to predict next month’s sales and we build models. If we have no way of knowing whether the models we have built are good at predicting sales a month ahead of time, then we have no way of knowing whether it is actually going to be any good when we put the model in production. we need a validation set that we know is reliable at telling us whether the model is likely to work well when we put it in production or use it on the test set.
+
+Normally we should not use the test set for anything other than using it right at the end of the competition or right at the end of the project to find out how we did. But there is one thing we can use the test set for in addition, that is to **calibrate** the validation set.
 
 <p align="center"> <img src="../figures/calibrating_validation_set.png" width="400"> </p>
 
-In Kaggle per example, we can have four different models and submitted each of the four models to Kaggle to find out their scores. X-axis is the Kaggle scores, and y-axis is the score on a particular validation set, above we have to validation sets, one plot for each, If the validation set is good, then the relationship between the leaderboards score (i.e. the test set score) should lie in a straight line (perfectly correlated). Ideally, it will lie on the y = x line, then we can find out which model is the best. In this case, The model on the right looks like it is going to predict the Kaggle leaderboard score well. That is really cool because we can go away and try a hundred different types of models, feature engineering, weighting, tweaks, hyper parameters, whatever else, see how they do on the validation set, and not have to submit to Kaggle. So we will get a lot more iterations, a lot more feedback. This is not just true for Kaggle but every machine learning project, in general, if the validation set is not showing nice fit line, we need think carefully
+In Kaggle for example, we can have four different models and submit each of the four models to Kaggle to find out their scores. X-axis is the Kaggle scores, and y-axis is the score on a particular validation set, above we have to validation sets, one plot for each, If the validation set is good, then the relationship between the leaderboards score (i.e. the test set score) should lie in a straight line (perfectly correlated). Ideally, it will lie on the y = x line, then we can find out which val set is the best. In this case, The val set on the right looks like it is going to predict the Kaggle leaderboard score well. That is really cool because we can go away and try a hundred different types of models, feature engineering, weighting, tweaks, hyper parameters, whatever else, see how they do on the validation set, and not have to submit to Kaggle. So we will get a lot more iterations, a lot more feedback. This is not just true for Kaggle but every machine learning project, but in general, if the validation set is not showing nice fit line, we need to reconstruct it.
 
-### Interpreting machine learning models
+## Interpreting machine learning models
 
 For model interpretation, there is no need to use the full dataset because we do not need a massively accurate random forest, we just need one which indicates the nature of relationships involved. So we just need to make sure the sample size is large enough that if we call the same interpretation commands multiple times, we do not get different results back each time. In practice, 50,000 is a good choice.
 
@@ -21,9 +31,9 @@ m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, max_features=0.5,
 m.fit(X_train, y_train)
 ```
 
-#### Confidence in the predictions
+## Confidence in the predictions
 
-We already know how to get the prediction. We take the average value in each leaf node in each tree after running a particular row through each tree. Normally, we do not just want a prediction, we also want to know how confident we are of that prediction. We would be less confident of a prediction if we have not seen many examples of rows like this one. In that case, we would not expect any of the trees to have a path through, which is designed to help us predict that row. So conceptually, you would expect then that as you pass this unusual row through different trees, it is going to end up in very different places. In other words, rather than just taking the mean of the predictions of the trees and saying that is our prediction, what if we took the standard deviation of the predictions of the trees. If the standard deviation is high, that means each tree is giving us a very different estimate of this row’s prediction. If this was a really common kind of row, the trees would have learned to make good predictions for it because it has seen a lot of similar rows to split based on them. So the standard deviation of the predictions across the trees gives us at least relative understanding of how confident we are of this prediction.
+We already know how to get the prediction. We take the average value in each leaf node in each tree after running a particular row through each tree. Normally, we do not just want a prediction, we also want to know how confident we are of that prediction. We would be less confident of a prediction if we have not seen many examples of rows like this one. In that case, we would not expect any of the trees to have a path through, which is designed to help us predict that row. So conceptually, we would expect then that as we pass this unusual row through different trees, it is going to end up in very different places. In other words, rather than just taking the mean of the predictions of the trees and saying that is our prediction, what if we took the standard deviation of the predictions of the trees. If the standard deviation is high, that means each tree is giving us a very different estimate of this row’s prediction. If this was a really common kind of row, the trees would have learned to make good predictions for it because it has seen a lot of similar rows to split based on them. So the standard deviation of the predictions across the trees gives us at least relative understanding of how confident we are of this prediction.
 
 ```python
 preds = np.stack([t.predict(X_valid) for t in m.estimators_])

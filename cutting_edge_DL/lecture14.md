@@ -1,4 +1,15 @@
+<!-- TOC -->
 
+- [Super-Resolution](#super-resolution)
+    - [Model](#model)
+- [Loss](#loss)
+        - [Perceptual loss](#perceptual-loss)
+        - [Style transfer](#style-transfer)
+- [Semantic Segmentation](#semantic-segmentation)
+        - [Model](#model)
+    - [Unet](#unet)
+
+<!-- /TOC -->
 ## Super-Resolution
 
 Super resolution is where we take a low resolution image (say 72x72) and upscale it to a larger image (say 288x288) trying to recreate a higher resolution image that looks as real as possible. This is a challenging thing to do because at 72x72, there’s not that much information about a lot of the details. The cool thing is that we are going to do it in a way as we tend to do with vision models which is not tied to the input size so we could then take this model and apply it to a 288 by 288 image and get something that’s four times bigger on each side so 16 times bigger than the original.
