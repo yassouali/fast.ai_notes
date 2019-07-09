@@ -84,4 +84,4 @@ word_indexes = [vocab[w] for w in ["some", "words"]]
 word_vectors = embed(word_indexes)
 ```
 
-He we're not only multiplying by r, but also adding w_adj, this is to further help the model have weights starting from say 0.4, By doing this, even after regularization, every feature is getting some form of minimum weight, Not necessarily because it could end up choosing a coefficient of -0.4 for a feature and that would say “you know what, even though Naive Bayes says it’s the r should be whatever for this feature. I think you should totally ignore it”.
+He we're not only multiplying by r, but also adding w_adj, this is to further help the model have weights starting from say 0.4, By doing this, even after regularization, every feature is getting some form of minimum weight, Not necessarily because it could end up choosing a coefficient of -0.4 for a feature and that would say “we know what, even though Naive Bayes says it’s the r should be whatever for this feature. I think we should totally ignore it”.

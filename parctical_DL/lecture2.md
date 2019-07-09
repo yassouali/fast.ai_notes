@@ -10,7 +10,7 @@ The idea of the paper is quite simple:
 * start with a small learning rate and calculate the loss;
 * gradually start increasing the learning rate and each time, calculate the loss;
 * once the loss starts to shoot up again, it is time to stop;
-* we select the highest learning rate you can find, where the loss is still crearly improving (steepest decrease of the loss).
+* we select the highest learning rate we can find, where the loss is still crearly improving (steepest decrease of the loss).
 
 <p align="center"> <img src="../figures/lr_finder.png" width="500"> </p>
 
@@ -18,9 +18,9 @@ In the figure above, we see that when we increase the learning rate beyond a cer
 
 ### learning rate annealing
 
-In training deep networks, it is usually helpful to anneal the learning rate over time. Good intuition to have in mind is that with a high learning rate, the system contains too much kinetic energy and the parameter vector bounces around chaotically, unable to settle down into deeper, but narrower parts of the loss function. Knowing when to decay the learning rate can be tricky: Decay it slowly and we'll be wasting computation bouncing around chaotically with little improvement for a long time. But decay it too aggressively and the system will cool too quickly, unable to reach the best position it can. There are three common types of implementing the learning rate decay:
+In training deep networks, it is usually helpful to anneal the learning rate over time. Good intuition to have in mind is that with a high learning rate, the system contains too much kinetic energy and the parameter vector bounces around chaotically, unable to settle down into deeper, but narrothe parts of the loss function. Knowing when to decay the learning rate can be tricky: Decay it slowly and we'll be wasting computation bouncing around chaotically with little improvement for a long time. But decay it too aggressively and the system will cool too quickly, unable to reach the best position it can. There are three common types of implementing the learning rate decay:
 
-* **Step decay:** Reduce the learning rate by some factor every few epochs. Typical values might be reducing the learning rate by a half every 5 epochs, or by 0.1 every 20 epochs. These numbers depend heavily on the type of problem and the model. One heuristic you may see in practice is to watch the validation error while training with a fixed learning rate, and reduce the learning rate by a constant (e.g. 0.5) whenever the validation error stops improving.
+* **Step decay:** Reduce the learning rate by some factor every few epochs. Typical values might be reducing the learning rate by a half every 5 epochs, or by 0.1 every 20 epochs. These numbers depend heavily on the type of problem and the model. One heuristic we may see in practice is to watch the validation error while training with a fixed learning rate, and reduce the learning rate by a constant (e.g. 0.5) whenever the validation error stops improving.
 * **Exponential decay**. has the mathematical form $\alpha = \alpha _ { 0 } e ^ { - k t }$, where α0, k are hyperparameters and t is the iteration number (or the epochs).
 * **1/t decay** has the mathematical form $\alpha = \alpha _ { 0 } / ( 1 + k t )$ where a0, k are hyperparameters and t is the iteration number.
 
@@ -98,7 +98,7 @@ However, counterintuitively it might be useful to periodically vary the LR betwe
 A second benefit is that the optimal LR appropriate for the error surface of the model will in all probability lie between the lower and higher bounds as discussed above. Hence we do get to use the best LR when amortized over time.
 
 #### Epoch, iterations, cycles and stepsize
-An epoch is one run of your training algorithm across the entire training set. If we set a batch size of 100, we get 500 batches in 1 epoch or 500 iterations. The iteration count is accumulated over epochs, so that in epoch 2, we get iterations 501 to 1000 for the same batch of 500, and so one.
+An epoch is one run of the training algorithm across the entire training set. If we set a batch size of 100, we get 500 batches in 1 epoch or 500 iterations. The iteration count is accumulated over epochs, so that in epoch 2, we get iterations 501 to 1000 for the same batch of 500, and so one.
 
 With that in mind, a cycle is defined as that many iterations where we want our learning rate to go from a base learning rate to a max learning rate, and back. And a stepsize is half of a cycle. Note that a cycle, in this case, need not fall on the boundary of an epoch, though in practice it does.
 

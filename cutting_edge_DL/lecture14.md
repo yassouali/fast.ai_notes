@@ -378,7 +378,7 @@ CAR_ID = '00087a6bd4dc'
 ims = [open_image(PATH/TRAIN_DN/f'{CAR_ID}_{i+1:02d}.jpg') for i in range(16)]
 fig, axes = plt.subplots(4, 4, figsize=(9, 6))
 for i,ax in enumerate(axes.flat): show_img(ims[i], ax=ax)
-plt.tight_layout(pad=0.1)
+plt.tight_lawet(pad=0.1)
 ```
 
 <p align="center"> <img src="../figures/carvana.png" width="500"> </p>
@@ -422,7 +422,7 @@ fig, axes = plt.subplots(4, 4, figsize=(9, 6))
 for i,ax in enumerate(axes.flat):
     ax = show_img(ims[i], ax=ax)
     show_img(im_masks[i][...,0], ax=ax, alpha=0.5)
-plt.tight_layout(pad=0.1)
+plt.tight_lawet(pad=0.1)
 
 ims = [open_image(PATH/TRAIN_DN/f'{CAR_ID}_{i+1:02d}.jpg') for i in range(16)]
 im_masks = [open_image(PATH/MASKS_DN/f'{CAR_ID}_{i+1:02d}_mask.png') for i in range(16)]

@@ -1,17 +1,20 @@
+# Lesson 3 - Performance, Validation and Model Interpretation
 
-# Lecture 3
+<!-- vscode-markdown-toc -->
+- [Lesson 3 - Performance, Validation and Model Interpretation](#Lesson-3---Performance-Validation-and-Model-Interpretation)
+  - [1. <a name='Importanceofgoodvalidationset'></a>Importance of good validation set](#1-a-nameImportanceofgoodvalidationsetaImportance-of-good-validation-set)
+  - [2. <a name='Interpretingmachinelearningmodels'></a>Interpreting machine learning models](#2-a-nameInterpretingmachinelearningmodelsaInterpreting-machine-learning-models)
+  - [3. <a name='Confidenceinthepredictions'></a>Confidence in the predictions](#3-a-nameConfidenceinthepredictionsaConfidence-in-the-predictions)
+  - [4. <a name='Featureimportance'></a>Feature importance](#4-a-nameFeatureimportanceaFeature-importance)
 
-<!-- TOC -->
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
 
-- [Lecture 3](#lecture-3)
-    - [Importance of good validation set](#importance-of-good-validation-set)
-    - [Interpreting machine learning models](#interpreting-machine-learning-models)
-    - [Confidence in the predictions](#confidence-in-the-predictions)
-        - [Feature importance](#feature-importance)
 
-<!-- /TOC -->
-
-## Importance of good validation set
+##  1. <a name='Importanceofgoodvalidationset'></a>Importance of good validation set
 
 If we do not have a good validation set, it is hard, if not impossible, to create a good model. If we are trying to predict next month’s sales and we build models. If we have no way of knowing whether the models we have built are good at predicting sales a month ahead of time, then we have no way of knowing whether it is actually going to be any good when we put the model in production. we need a validation set that we know is reliable at telling us whether the model is likely to work well when we put it in production or use it on the test set.
 
@@ -19,9 +22,9 @@ Normally we should not use the test set for anything other than using it right a
 
 <p align="center"> <img src="../figures/calibrating_validation_set.png" width="400"> </p>
 
-In Kaggle for example, we can have four different models and submit each of the four models to Kaggle to find out their scores. X-axis is the Kaggle scores, and y-axis is the score on a particular validation set, above we have to validation sets, one plot for each, If the validation set is good, then the relationship between the leaderboards score (i.e. the test set score) should lie in a straight line (perfectly correlated). Ideally, it will lie on the y = x line, then we can find out which val set is the best. In this case, The val set on the right looks like it is going to predict the Kaggle leaderboard score well. That is really cool because we can go away and try a hundred different types of models, feature engineering, weighting, tweaks, hyper parameters, whatever else, see how they do on the validation set, and not have to submit to Kaggle. So we will get a lot more iterations, a lot more feedback. This is not just true for Kaggle but every machine learning project, but in general, if the validation set is not showing nice fit line, we need to reconstruct it.
+In Kaggle for example, we can have four different models and submit each of the four models to Kaggle to find out their scores. X-axis is the Kaggle scores, and y-axis is the score on a particular validation set, above we have to validation sets, one plot for each, If the validation set is good, then the relationship between the leaderboard score (i.e. the test set score) should lie in a straight line (perfectly correlated). Ideally, it will lie on the y = x line, then we can find out which val set is the best. In this case, The val set on the right looks like it is going to predict the Kaggle leaderboard score well. That is really cool because we can go away and try a hundred different types of models, feature engineering, weighting, tweaks, hyper parameters, whatever else, see how they do on the validation set, and not have to submit to Kaggle. So we will get a lot more iterations, a lot more feedback. This is not just true for Kaggle but every machine learning project, but in general, if the validation set is not showing nice fit line, we need to reconstruct it.
 
-## Interpreting machine learning models
+##  2. <a name='Interpretingmachinelearningmodels'></a>Interpreting machine learning models
 
 For model interpretation, there is no need to use the full dataset because we do not need a massively accurate random forest, we just need one which indicates the nature of relationships involved. So we just need to make sure the sample size is large enough that if we call the same interpretation commands multiple times, we do not get different results back each time. In practice, 50,000 is a good choice.
 
@@ -31,7 +34,7 @@ m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, max_features=0.5,
 m.fit(X_train, y_train)
 ```
 
-## Confidence in the predictions
+##  3. <a name='Confidenceinthepredictions'></a>Confidence in the predictions
 
 We already know how to get the prediction. We take the average value in each leaf node in each tree after running a particular row through each tree. Normally, we do not just want a prediction, we also want to know how confident we are of that prediction. We would be less confident of a prediction if we have not seen many examples of rows like this one. In that case, we would not expect any of the trees to have a path through, which is designed to help us predict that row. So conceptually, we would expect then that as we pass this unusual row through different trees, it is going to end up in very different places. In other words, rather than just taking the mean of the predictions of the trees and saying that is our prediction, what if we took the standard deviation of the predictions of the trees. If the standard deviation is high, that means each tree is giving us a very different estimate of this row’s prediction. If this was a really common kind of row, the trees would have learned to make good predictions for it because it has seen a lot of similar rows to split based on them. So the standard deviation of the predictions across the trees gives us at least relative understanding of how confident we are of this prediction.
 
@@ -40,7 +43,7 @@ preds = np.stack([t.predict(X_valid) for t in m.estimators_])
 np.mean(preds[:,0]), np.std(preds[:,0])
 ```
 
-One problem with the code above, is that we execute run each tree squentially on the validation set, and we end up using only one CPU for all the trees (n_estimators=40), it'll be better to run them in parallel and utilize the multi core system we have. To do this we can utilize the Python calss `ProcessPoolExecutor` that uses a pool of processes to execute calls asynchronously.
+One problem with the code above, is that we execute run each tree squentially on the validation set, and we end up using only one CPU for all the trees (n_estimators=40), it'll be better to run them in parallel and utilize the multi-core system we have. To do this we can utilize the Python class `ProcessPoolExecutor` that uses a pool of processes to execute calls asynchronously.
 
 ```python
 def parallel_trees(m, fn, n_jobs=8):
@@ -65,9 +68,9 @@ summ = x[flds].groupby(flds[0]).mean()
 
 And it is clear, the less examples we have, the larger the standard deviation is.
 
-### Feature importance
+##  4. <a name='Featureimportance'></a>Feature importance
 
-We measure the importance of a feature by calculating the increase in the model’s prediction error after permuting the feature. A feature is “important” if shuffling its values increases the model error, because in this case the model relied on the feature for the prediction. A feature is “unimportant” if shuffling its values leaves the model error unchanged, because in this case the model ignored the feature for the prediction. The permutation feature importance measurement was introduced by Breiman (2001)34 for random forests. Based on this idea, Fisher, Rudin, and Dominici (2018)35 proposed a model-agnostic version of the feature importance and called it model reliance. They also introduced more advanced ideas about feature importance, for example a (model-specific) version that takes into account that many prediction models may predict the data well. Their paper is worth reading.
+We measure the importance of a feature by calculating the increase in the model’s prediction error after permuting the feature. A feature is “important” if shuffling its values increases the model error, because in this case the model relied on this feature for the predictions. A feature is “unimportant” if shuffling its values leaves the model error unchanged, because in this case the model ignored the feature for the prediction. The permutation feature importance measurement was introduced by Breiman (2001) for random forests. Based on this idea, Fisher, Rudin, and Dominici (2018) proposed a model-agnostic version of the feature importance and called it model reliance. They also introduced more advanced ideas about feature importance, for example a (model-specific) version that takes into account that many prediction models may predict the data well. Their paper is worth reading.
 
 The permutation feature importance algorithm based on Fisher, Rudin, and Dominici (2018):
 
@@ -94,9 +97,9 @@ plot_fi(fi[:30])
 
 And by displying the bar plot fot 30 most important features in our model we get:
 
-<p align="center"> <img src="../figures/feature_importance.png" width="550"> </p>
+<p align="center"> <img src="../figures/feature_importance.png" width="600"> </p>
 
-We can also delete all the other columns / features, and obly preserve the ten most important ones, and retrain our model to see if the predicition score might stay the same.
+We can also delete all the other columns / features, and only maintain the ten most important ones, and retrain our model to see if the predicition score might stay the same.
 
 ```python
 m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, max_features=0.5, n_jobs=-1, oob_score=True)

@@ -41,7 +41,7 @@ os.makedirs(SUBM, exist_ok=True)
 df.to_csv(f'{SUBM}subm.gz', compression='gzip', index=False)
 ```
 
-If we're working in a distant server, we can use `FileLink` to back a URL that you can use to download onto your computer. For submissions, or file checking etc.
+If we're working in a distant server, we can use `FileLink` to back a URL that we can use to download onto the computer. For submissions, or file checking etc.
 
 ```python
 FileLink(f'{SUBM}subm.gz')
@@ -86,7 +86,7 @@ Therefore using one over the other scales the entropy by a constant factor. When
 
 #### Structured and unstructured data
 
-Structured data is data that can be both syntactically and semantically described by a straightforward format description. Data in CSV files, XML files, JSON files, email headers, and to some extent HTML is structured, because once you have the format specifier for a particular file, you can easily identify specific values in the data and what they mean semantically. A whole lot of business-gathered data is in lists, tables, or other structured formats.
+Structured data is data that can be both syntactically and semantically described by a straightforward format description. Data in CSV files, XML files, JSON files, email headers, and to some extent HTML is structured, because once we have the format specifier for a particular file, we can easily identify specific values in the data and what they mean semantically. A whole lot of business-gathered data is in lists, tables, or other structured formats.
 
 Unstructured data is data that is in a more ambiguous format. It may (or may not) be in a well-defined syntactical format, such as a video or audio image, but its semantic contents are not obvious from its format. Natural-language text, audio and video files, etc are much harder to “mine” than structured data, so analyzing them requires a more statistical approach to figuring what the data means semantically.
 

@@ -5,7 +5,7 @@ There are two types of columns:
 * Categorical — It has a number of “levels” e.g. StoreType, Assortment.
 * Continuous — It has a number where differences or ratios of that numbers have some kind of meanings e.g. `CompetitionDistance`.
 
-Numbers like `Year` , `Month`, although we could treat them as continuous, we do not have to. If we decide to make `Year` a categorical variable, we are telling our neural net that for every different “level” of `Year` (2000, 2001, 2002), you can treat it totally differently; where-else if we say it is continuous, it has to come up with some kind of smooth function to fit them. So often things that actually are continuous but do not have many distinct levels (e.g. Year, DayOfWeek), it often works better to treat them as categorical.
+Numbers like `Year` , `Month`, although we could treat them as continuous, we do not have to. If we decide to make `Year` a categorical variable, we are telling our neural net that for every different “level” of `Year` (2000, 2001, 2002), we can treat it totally differently; where-else if we say it is continuous, it has to come up with some kind of smooth function to fit them. So often things that actually are continuous but do not have many distinct levels (e.g. Year, DayOfWeek), it often works better to treat them as categorical.
 
 Choosing categorical vs. continuous variable is a modeling decision we get to make. In summary, if it is categorical in the data, it has to be categorical. If it is continuous in the data, we get to pick whether to make it continuous or categorical in the model. Generally, floating point numbers are hard to make categorical as there are many levels (Cardinality).
 
@@ -91,7 +91,7 @@ MixedInputModel(
 ### NLP
 
 #### spaCy
-spaCy is a relatively new package for “Industrial strength NLP in Python”. It is designed with the applied data scientist in mind, meaning it does not weigh the user down with decisions over what esoteric algorithms to use for common tasks and it’s fast. Incredibly fast (it’s implemented in Cython). If you are familiar with the Python data science stack, spaCy is your numpy for NLP – it’s reasonably low-level, but very intuitive and performant.
+spaCy is a relatively new package for “Industrial strength NLP in Python”. It is designed with the applied data scientist in mind, meaning it does not weigh the user down with decisions over what esoteric algorithms to use for common tasks and it’s fast. Incredibly fast (it’s implemented in Cython). If we are familiar with the Python data science stack, spaCy is the numpy for NLP – it’s reasonably low-level, but very intuitive and performant.
 
 spacy provides a one-stop-shop for tasks commonly used in any NLP project, including:
 

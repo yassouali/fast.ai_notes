@@ -443,11 +443,11 @@ def nll_loss_seq(inp, targ):
     return F.nll_loss(inp.view(-1,nh), targ)
 ```
 
-Note : PyTorch does not generally actually shuffle the memory order when you do things like ‘transpose’, but instead it keeps some internal metadata to treat it as if it is transposed. When you transpose a matrix, PyTorch just updates the metadata . If you ever see an error that says `this tensor is not continuous` , add .contiguous() after it and error goes away.
+Note : PyTorch does not generally actually shuffle the memory order when we do things like ‘transpose’, but instead it keeps some internal metadata to treat it as if it is transposed. When we transpose a matrix, PyTorch just updates the metadata . If we ever see an error that says `this tensor is not continuous` , add .contiguous() after it and error goes away.
 
 #### Gradient Explosion
 
-self.rnn(inp, h) is a loop applying the same matrix multiply again and again. If that matrix multiply tends to increase the activations each time, we are effectively doing that to the power of 8 — we call this a gradient explosion. We want to make sure the initial l_hidden will not cause our activations on average to increase or decrease. one solution is to initilize the RNN matrix hidden to hidden weights with an indentity matrix :
+self.rnn(inp, h) is a loop applying the same matrix multiply again and again. If that matrix multiply tends to increase the activations each time, we are effectively doing that to the pothe of 8 — we call this a gradient explosion. We want to make sure the initial l_hidden will not cause our activations on average to increase or decrease. one solution is to initilize the RNN matrix hidden to hidden weights with an indentity matrix :
 
 ```python
 m.rnn.weight_hh_l0.data.copy_(torch.eye(n_hidden))

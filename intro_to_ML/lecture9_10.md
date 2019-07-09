@@ -1,6 +1,17 @@
+<!-- vscode-markdown-toc -->
+* 1. [Iterators & Streaming](#IteratorsStreaming)
+* 2. [Regularization](#Regularization)
+* 3. [NLP](#NLP)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
 # LECTURE 9/10
 
-### Iterators & Streaming
+##  1. <a name='IteratorsStreaming'></a>Iterators & Streaming
 
 Its a object that we call next on. We can pull different pieces, ordered or randomized that can be pulled for mini-batches.
 
@@ -9,9 +20,9 @@ Its a object that we call next on. We can pull different pieces, ordered or rand
 Pytorch is designed to handle this concept too, of predicting a stream of data (or the next item). fastai is also designed around this concept of iterators. DataLoader is created with the same concept, but with multiprocessing, which is multi threaded applications.
 
 
-### Regularization
+##  2. <a name='Regularization'></a>Regularization
 
-Add new terms to the loss function. If we add L1 and L2 norms of the weights to the loss functions, it incentives the coefficients to be zlose to zero. See the extra term below.
+Add new terms to the loss function. If we add L1 and L2 norms of the weights to the loss functions, it incentives the coefficients to be close to zero. See the extra term below.
 
 $$ loss =\frac{1}{n} \sum{(wX-y)^2} + \alpha \sum{w^2} $$
 
@@ -22,7 +33,7 @@ How to implement?
 
 In the begining of the training we might see that the error in the training set is smaller with regularization than without, this might be due to the fact that the function we're optimizing is easier and smoother and can less iterations to reduce the error, but in the end with regularization the training error is larger because now we don't have any overfitting, and in the error in the validation set becomes smaller.
 
-## NLP
+##  3. <a name='NLP'></a>NLP
 
 In this simple approach, we'll first discard the order of the words, and only use their frequency in the corpus, this is done using term document matrix, which count the number of appearances of each word (feature) in the document, so the size of this matrix is # Document x # Number of unique words, the unique words are obtained by tokenizing all the words in the corpus (*this "movie" isn't good*. *becomes this " movie " is n't good .*). First we'll only use unigrams.
 
@@ -50,7 +61,7 @@ trn_term_doc = veczr.fit_transform(trn)
 val_term_doc = veczr.transform(val)
 ```
 
-`fit_transform(trn)` finds the vocabulary in the training set. It also transforms the training set into a term-document matrix. Since we have to apply the *same transformation* to your validation set, the second line uses just the method `transform(val)`. `trn_term_doc` and `val_term_doc` are sparse matrices. `trn_term_doc[i]` represents training document i and it contains a count of words for each document for each word in the vocabulary.
+`fit_transform(trn)` finds the vocabulary in the training set. It also transforms the training set into a term-document matrix. Since we have to apply the *same transformation* to the validation set, the second line uses just the method `transform(val)`. `trn_term_doc` and `val_term_doc` are sparse matrices. `trn_term_doc[i]` represents training document i and it contains a count of words for each document for each word in the vocabulary.
 
 Term Document Matrix:
 

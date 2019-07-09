@@ -1,4 +1,6 @@
-### Normalize
+# Lesson 8 - Gradient Descent and Logistic Regression
+
+## Normalization
 
 Normalizing data is subtracting out the mean and dividing by the standard deviation.
 
@@ -14,9 +16,9 @@ x=(x-mean)/std
 ```
 Now for our validation data, we need to use the standard deviation and mean from the training data. We have to normalize it the same way.
 
-### Look at the data
+## Looking at the data
 
-In any sort of data science work, it's important to look at your data, to make sure you understand the format, how it's stored, what type of values it holds, etc. To make it easier to work with, let's reshape it into 2d images from the flattened 1d format.
+In any sort of data science work, it's important to look at wer data, to make sure we understand the format, how it's stored, what type of values it holds, etc. To make it easier to work with, let's reshape it into 2d images from the flattened 1d format.
 
 Helper methods
 ```python
@@ -40,7 +42,7 @@ def plots(ims, figsize=(12,6), rows=2, titles=None):
 
 There are a number of advantages of using log softmax over softmax including practical reasons like improved numerical performance and gradient optimization. These advantages can be extremely important for implementation especially when training a model can be computationally challenging and expensive. At the heart of using log-softmax over softmax is the use of log probabilities over probabilities, which has nice information theoretic interpretations.
 
-When used for classifiers the log-softmax has the effect of heavily penalizing the model when it fails to predict a correct class. Whether or not that penalization works well for solving your problem is open to your testing, so both log-softmax and softmax are worth using.
+When used for classifiers the log-softmax has the effect of heavily penalizing the model when it fails to predict a correct class. Whether or not that penalization works well for solving the problem is open to testing, so both log-softmax and softmax are worth using.
 
 Gradient methods generally work better optimizing log p(x) (-log p goes to inf if the p goes to zero, and one if p=1 and it is the correct class) than p(x) because the gradient of log p(x) is generally more well-scaled. That is, it has a size that consistently and helpfully reflects the objective function's geometry, making it easier to select an appropriate step size and get to the optimum in fewer steps.
 

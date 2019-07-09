@@ -5,7 +5,7 @@ Here is a list of shortcuts to use on a daily basis:
 
 **general shortcuts**
 
-Note: The Jupyter help menu shows all the shorcuts as a capital letter, but you should be using the lowercase letters:
+Note: The Jupyter help menu shows all the shorcuts as a capital letter, but we should be using the lowercase letters:
 
 | Command         | Result                                        |
 |-----------------|:---------------------------------------------:|
@@ -40,7 +40,7 @@ When we are editing the Python code, there are a number of shortcuts to help to 
 
 **Secure access via port forwarding**
 
-When running your Jupyter Notebooks on our own server, we need to find a way to securely access it.
+When running the Jupyter Notebooks on our own server, we need to find a way to securely access it.
 
 ```
 # ssh -L local_port:remote_host:remote_port remote_machine_ip

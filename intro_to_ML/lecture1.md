@@ -1,21 +1,25 @@
+<!-- vscode-markdown-toc -->
+Preliminaries
 
-<!-- TOC -->
+* 1. [Some notes about Google Colab](#SomenotesaboutGoogleColab)
+* 2. [Jupyter tricks](#Jupytertricks)
+* 3. [Python tricks](#Pythontricks)
 
-- [Preliminaries](#preliminaries)
-    - [Some notes about Google Colab](#some-notes-about-google-colab)
-    - [Jupyter tricks](#jupyter-tricks)
-    - [Python tricks](#python-tricks)
-- [Lecture 1 : Data](#lecture-1--data)
-    - [Thecurse of dimensionality?](#thecurse-of-dimensionality)
-    - [No free lunch theorem](#no-free-lunch-theorem)
-    - [Preprocessing](#preprocessing)
-    - [Side note; Skitlearn](#side-note-skitlearn)
+Lesson 1 - Introduction to Random Forests
+* 4. [Thecurse of dimensionality?](#Thecurseofdimensionality)
+* 5. [No free lunch theorem](#Nofreelunchtheorem)
+* 6. [Preprocessing](#Preprocessing)
+* 7. [Side note; Skitlearn](#SidenoteSkitlearn)
 
-<!-- /TOC -->
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
 
 # Preliminaries
 
-## Some notes about Google Colab
+##  1. <a name='SomenotesaboutGoogleColab'></a>Some notes about Google Colab
 
 - To install some packages, we can use either `pip` or `apt`:
 ```python
@@ -53,7 +57,7 @@ kaggle competitions download -c bluebook-for-bulldozers
 ````
 
 
-## Jupyter tricks
+##  2. <a name='Jupytertricks'></a>Jupyter tricks
 
 - In data sience (unlike software engineering), prototyping is very important, and jupyter notebook helps a lot, for example, given a function `display`:
 
@@ -65,7 +69,7 @@ kaggle competitions download -c bluebook-for-bulldozers
 - If we put %time, it will tell us how much times it took to execute the line in question.
 - If we  run a line of code and it takes quite a long time, we can put %prun in front. `%prun m.fit(x, y)`. This will run a profiler and tells us which lines of code took the most time, and maybe try to change our preprocessing to help speed things up.
 
-## Python tricks
+##  3. <a name='Pythontricks'></a>Python tricks
 
 1- `getattr` looks inside of an object and finds an attribute with that name, for example to modify the date (datetime format in Pandas), we use it to add more colums in the dataframe depending on the name (Year, Week, Month, Is_quarter_end...), these data attribues are present in field_name.dt (Pandas splits out different methods inside attributes that are specific to what they are. So date time objects will be in `dt`).
 
@@ -87,20 +91,20 @@ But generally it is better to use only a subset of the data to explore it, and n
 
 ___
 
-# Lecture 1 : Data
+# Lesson 1 - Introduction to Random Forests
 
 Now for the data, we'll use Kaggle data, and there is a trick to download it using cURL from the terminal, by capturing the GET resquest using the inspect element / Network of Firefox browser:
 
 * Press `ctrl + shift + i` to open web developer tool. Go to Network tab, click on Download button, and cancel out of the dialog box. It shows network connections that were initiated. We then right-click on it and select Copy as cURL. Paste the command and add `-o bulldozer.zip` at the end (possibly remove `— — 2.0` in the cURL command), or use the Kaggle API
 
-## Thecurse of dimensionality?
+##  4. <a name='Thecurseofdimensionality'></a>Thecurse of dimensionality?
 The more dimension of the data / features we have, it creates a space that is more and more empty, the more dimensions we have, the more all of the points sit on the edge of that space. If we just have a single dimension where things are random, then they are spread out all over. But if it is a square then the probability that they are in the middle means that they cannot be on the edge of either dimension so it is a little less likely that they are not on the edge. Each dimension we add, it becomes multiplicatively less likely that the point is not on the edge of at least one dimension, so in high dimensions, everything sits on the edge. What that means in theory is that the distance between points is much less meaningful. But this turns out not to be the case for number of reasons, like they still do have different distances away from each other. Just because they are on the edge, they still vary on how far away they are from each other and their is some similarities between each point even in these high dimensions.
 
-## No free lunch theorem
+##  5. <a name='Nofreelunchtheorem'></a>No free lunch theorem
 There is a claim that there is no type of model that works well for any kind of dataset. In the mathematical sense, any random dataset by definition is random, so there is not going to be some way of looking at every possible random dataset that is in someway more useful than any other approach. In real world, we look at data which is not random. Mathematically we would say it sits on some lower dimensional manifold. It was created by some kind of causal structure.
  
 
-## Preprocessing
+##  6. <a name='Preprocessing'></a>Preprocessing
 Generally, the provided dataset contains a mix of continuous and categorical variables.
 
 * **continuous**: numbers where the meaning is numeric such as price.
@@ -122,7 +126,7 @@ for n,c in df.items():
 
 **Feather format**: Reading CSV takes about 10 seconds, and processing takes another 10 seconds, so if we do not want to wait again, it is a good idea to save them. Here we will save it in a feather format where we save the preprocessed data directely to disk in exactly the same basic format that it is in RAM. This is by far the fastest way to save something, and also to read it back. Feather format is becoming standard in not only Pandas but in Java, Apache Spark, etc.
 
-## Side note; Skitlearn
+##  7. <a name='SidenoteSkitlearn'></a>Side note; Skitlearn
 
 Everything in scikit-learn has the same form and takes the same steps, to be used for random forest (either a regressor for predicting continuous variables `RandomForestRegressor `, or a classifier for predicting categorifcal variables `RandomForestClassifier `)
 

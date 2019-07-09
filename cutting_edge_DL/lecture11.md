@@ -32,7 +32,7 @@ We are going to try to translate French into English by following the standard n
 
 ### Data
 
-As usual, we need `(x, y)` pairs. In this case, `x: French sentence`, `y: English sentence` which you will compare the model's predictions against. We need a lot of these tuples of French sentences with their equivalent English sentence, or what's called *parallel corpus*, which is harder to find than a corpus for a language model. For a language model, we just need text in some language, but for translation it's a bit harder, but there are some pretty good parallel corpus available for European languages. The European Parliament has every sentence in every European language. For French to English we can use some official canadian websites taht a have their content in both english and french, one of these datasets are the French/English parallel texts by Chris Callison-Burch: [link](http://www.statmt.org/wmt15/translation-task.html).
+As usual, we need `(x, y)` pairs. In this case, `x: French sentence`, `y: English sentence` which we will compare the model's predictions against. We need a lot of these tuples of French sentences with their equivalent English sentence, or what's called *parallel corpus*, which is harder to find than a corpus for a language model. For a language model, we just need text in some language, but for translation it's a bit harder, but there are some pretty good parallel corpus available for European languages. The European Parliament has every sentence in every European language. For French to English we can use some official canadian websites taht a have their content in both english and french, one of these datasets are the French/English parallel texts by Chris Callison-Burch: [link](http://www.statmt.org/wmt15/translation-task.html).
 
 We then create the paths that hold the training data:
 
@@ -330,7 +330,7 @@ So our seq2seq model, we'll contain two layers of RNN cells, each one with a hid
 
 And at each forward step, we initialize the hidden activations with zeros, and then pass the input through the encoder to obtain the last hidden activation, that we pass to the linear layer and then to the decoder, in which, given a sequence length, at each time step we use the current hidden state to predict a possible translattion, in this case, at each time step, the next input to our decoder in the previous prediction, and at the end we return all the predicion (the probabilities) to then pass to the loss function.
 
-**Loss function:** The loss function is categorical cross entropy loss. We have a list of probabilities for each of our classes where the classes are all the words in our English vocab and we have a target which is the correct class (i.e. which is the correct word at this location). There are two tweaks which is why we need to write our own loss function but you can see basically it is going to be cross entropy loss:
+**Loss function:** The loss function is categorical cross entropy loss. We have a list of probabilities for each of our classes where the classes are all the words in our English vocab and we have a target which is the correct class (i.e. which is the correct word at this location). There are two tweaks which is why we need to write our own loss function but we can see basically it is going to be cross entropy loss:
 
 1. If the generated sequence length is shorter than the sequence length of the target, we need to add some padding. PyTorch padding function requires a tuple of 6 to pad a rank 3 tensor (sequence length, batch size, number of words in the vocab). Each pair represents padding before and after that dimension.
 2. Flatten out the predictions given that F.cross_entropy expects a rank 2 tensor.
@@ -373,8 +373,8 @@ for i in range(180,190):
     print()
 
 # que faites - vous ? _eos_
-# what do you do ? _eos_
-# what do you do ? _eos_
+# what do we do ? _eos_
+# what do we do ? _eos_
 
 # qui réglemente les pylônes d' antennes ? _eos_
 # who regulates antenna towers ? _eos_
@@ -645,7 +645,7 @@ def show_img(im, figsize=None, ax=None):
 def show_imgs(ims, cols, figsize=None):
     fig,axes = plt.subplots(len(ims)//cols, cols, figsize=figsize)
     for i,ax in enumerate(axes.flat): show_img(ims[i], ax=ax)
-    plt.tight_layout()
+    plt.tight_lawet()
 
 show_imgs(denorm(md.val_ds[start:start+25][0]), 5, (10,10))
 ```

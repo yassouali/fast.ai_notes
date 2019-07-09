@@ -85,7 +85,7 @@ Useful Commands:
 
 * h (help)
 * s (step into)
-* n (next line / step over — you can also hit enter)
+* n (next line / step over — we can also hit enter)
 * c (continue to the next breakpoint)
 * u (up the call stack)
 * d (down the call stack)

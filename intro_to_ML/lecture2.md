@@ -1,27 +1,29 @@
+<!-- vscode-markdown-toc -->
+- [Lesson 2 - Random Forest Deep Dive](#Lesson-2---Random-Forest-Deep-Dive)
+	- [1. <a name='ModelEvaluation'></a>Model Evaluation](#1-a-nameModelEvaluationaModel-Evaluation)
+		- [1.1. <a name='R2Score'></a>R2 Score](#11-a-nameR2ScoreaR2-Score)
+		- [1.2. <a name='ValidationsetfortheKaggledata'></a>Validation set for the Kaggle data](#12-a-nameValidationsetfortheKaggledataaValidation-set-for-the-Kaggle-data)
+	- [2. <a name='RandomForest'></a>Random Forest](#2-a-nameRandomForestaRandom-Forest)
+		- [2.1. <a name='Buildingasingletree'></a>Building a single tree](#21-a-nameBuildingasingletreeaBuilding-a-single-tree)
+		- [2.2. <a name='SideNote:UsingEntropytopickthenodes'></a>Side Note: Using Entropy to pick the nodes](#22-a-nameSideNoteUsingEntropytopickthenodesaSide-Note-Using-Entropy-to-pick-the-nodes)
+		- [2.3. <a name='Bagging'></a>Bagging](#23-a-nameBaggingaBagging)
+		- [2.4. <a name='Out-of-bagOOBscore'></a>Out-of-bag (OOB) score](#24-a-nameOut-of-bagOOBscoreaOut-of-bag-OOB-score)
+		- [2.5. <a name='Subsampling'></a>Subsampling](#25-a-nameSubsamplingaSubsampling)
+		- [2.6. <a name='Overfitting'></a>Overfitting](#26-a-nameOverfittingaOverfitting)
 
-# Lecture 2: Deep dive into Random Forest
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+# Lesson 2 - Random Forest Deep Dive
 
-<!-- TOC -->
 
-- [Lecture 2: Deep dive into Random Forest](#lecture-2-deep-dive-into-random-forest)
-    - [Model Evaluation](#model-evaluation)
-        - [R2 Score](#r2-score)
-        - [Validation set for the Kaggle data](#validation-set-for-the-kaggle-data)
-    - [Random Forest](#random-forest)
-        - [Building a single tree](#building-a-single-tree)
-        - [Side Note: Using Entropy to pick the nodes](#side-note-using-entropy-to-pick-the-nodes)
-        - [Bagging](#bagging)
-        - [Out-of-bag (OOB) score](#out-of-bag-oob-score)
-        - [Subsampling](#subsampling)
-        - [Overfitting](#overfitting)
-
-<!-- /TOC -->
-
-## Model Evaluation
+##  1. <a name='ModelEvaluation'></a>Model Evaluation
 
 Let's first statr by introduction the measure we'll use to evaluate our model:
 
-### R2 Score
+###  1.1. <a name='R2Score'></a>R2 Score
 In an R2 Score, we compare the models error to the error made by the most non-stupid model we can use (always predicting the average), so the range of R2 is [-inf, 1], one is the perfect score, and when the R² is negative, it means that the model is worse than predicting the mean.
 
 So in a nutshell, R² is the ratio between how good the model is  vs. the naïve mean model.
@@ -39,7 +41,7 @@ Where:
 
 R² is not necessarily what we are actually trying to optimize, but it is a number we can use for every model and we can start to get a feel of what .8 looks like or what .9 looks like. Something we may find interesting is to create synthetic 2D datasets with different amounts of random noise, and see what they look like on a scatterplot and their R² to get a feel of how close they are to the actual value.
 
-### Validation set for the Kaggle data
+###  1.2. <a name='ValidationsetfortheKaggledata'></a>Validation set for the Kaggle data
 
 If the dataset has a time piece in it (as is in Blue Book competition), we would likely to predict future prices/values/etc. What Kaggle did was to give us data representing a particular date range in the training set, and then the test set presented a future set of dates that wasn’t represented in the training set. So we need to create a validation set (for hyper-parameter tuning without over fitted to avoid to the training data) that has the same properties:
 
@@ -55,11 +57,11 @@ y_train, y_valid = split_vals(y, n_trn)
 
 But there is always the possibility of eventually overfitting on the validation set and when we try it on the test set or submit it to Kaggle, it turns out not to be very good. This happens in Kaggle competitions all the time and they actually have a fourth dataset which is called the private leader board set. Every time we submit to Kaggle, we actually only get feedback on how well it does on the public leader board set and we do not know which rows they are. At the end of the competition, we get judged on a different dataset entirely called the private leader board set.
 
-## Random Forest
+##  2. <a name='RandomForest'></a>Random Forest
 
 Now let's jump into the prediction fuction we'll use, or the model, which is a tree based ensamble called Random Forest
 
-### Building a single tree
+###  2.1. <a name='Buildingasingletree'></a>Building a single tree
 
 To unserstand Random Forest, let's begin by taking a look into trees, for that we'll use `n_estimators=1` to create a forest with just one tree and `max_depth=3` to make it a small tree
 
@@ -80,7 +82,7 @@ The first logical question, is how to find the best split of our data into two s
 Right now, our decision tree has R² of 0.4. Let’s make it better by removing max_depth=3. By doing so, the training R² becomes 1 (as expected since each leaf node contains exactly one element) and validation R² is 0.73 — which is better than the shallow tree but not as good as we would like.
 
 
-### Side Note: Using Entropy to pick the nodes
+###  2.2. <a name='SideNote:UsingEntropytopickthenodes'></a>Side Note: Using Entropy to pick the nodes
 Instead of using MSE to differentiate between different splits, and find the best ones, we can also use the entropy of the leaves (how homogenous they are, or how much the entropy was reduced):
 
 1- Given a chosen attribute A, with K distinct values, it divides the training set E into subsets E1 , ... , EK. 
@@ -95,7 +97,7 @@ Instead of using MSE to differentiate between different splits, and find the bes
 
 4- Choose the attribute with the largest I
 
-### Bagging
+###  2.3. <a name='Bagging'></a>Bagging
 
 *Let’s make our decision tree better*, To make these trees better, we will create a forest. To create a forest, we will use a statistical technique called **bagging**.
 
@@ -123,7 +125,7 @@ Each tree is stored in an attribute called `estimators_` . For each tree, we wil
 
 Here is a plot of R² values given first *X* trees. As we add more trees, R² improves. But it seems as though it has flattened out.
 
-### Out-of-bag (OOB) score
+###  2.4. <a name='Out-of-bagOOBscore'></a>Out-of-bag (OOB) score
 
 Sometimes the dataset will be small and we will not want to pull out a validation set because doing so means we now do not have enough data to build a good model. However, random forests have a very clever trick called out-of-bag (OOB) error which can handle this.
 
@@ -133,7 +135,7 @@ m = RandomForestRegressor(n_estimators=40, n_jobs=-1, oob_score=True)
 
 What we could do is to recognize that in our first tree, some of the rows did not get used for training. so we can pass those unused rows through the first tree and treat it as a validation set for this first tree. For the second tree, we could pass through the rows that were not used as the second val set, and so on. Effectively, we would have a different validation set for each tree. To calculate our prediction, we would average all the trees where that row is not used for training. If we have hundreds of trees, it is very likely that all of the rows are going to appear many times in these out-of-bag samples. we can then calculate RMSE, R², etc on these out-of-bag predictions.
 
-### Subsampling
+###  2.5. <a name='Subsampling'></a>Subsampling
 
 Earlier, we took 30,000 rows and created all the models which used a different subset of that 30,000 rows to speed things up. Why not take a totally different subset of 30,000 each time? In other words, let’s leave the entire 389,125 records as is, and if we want to make things faster, pick a different subset of 30,000 each time. So rather than bootstrapping the entire set of rows, just randomly sample a subset of the data.
 
@@ -174,7 +176,7 @@ So for each Ti bootstrap dataset we create a tree `Ki`. If we want to classify s
 
 Out-of-bag estimate for the generalization error is the error rate of the out-of-bag classifier on the training set (compare it with known yi's).
 
-### Overfitting
+###  2.6. <a name='Overfitting'></a>Overfitting
 
 One way to reduce over-fitting is to grow our trees less deeply. We do this by specifying (with `min_samples_leaf`) that we require some minimum number of rows in every leaf node. This has two benefits:
 
