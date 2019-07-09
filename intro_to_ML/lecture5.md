@@ -1,5 +1,5 @@
 <!-- vscode-markdown-toc -->
-- [Lesson 5 - Extrapolation and RF from Scratch](#Lesson-5---Extrapolation-and-RF-from-Scratch)
+- [Lecture 5 - Extrapolation and RF from Scratch](#Lecture-5---Extrapolation-and-RF-from-Scratch)
   - [1. <a name='Modeloverfitting'></a>Model overfitting](#1-a-nameModeloverfittingaModel-overfitting)
   - [2. <a name='Cross-validation'></a>Cross-validation](#2-a-nameCross-validationaCross-validation)
   - [3. <a name='TreeinterpreterLinkhttp:blog.datadive.netinterpreting-random-forests'></a>Tree interpreter Link](#3-a-nameTreeinterpreterLinkhttpblogdatadivenetinterpreting-random-forestsaTree-interpreter-Link)
@@ -10,7 +10,7 @@
 	autoSave=true
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
-# Lesson 5 - Extrapolation and RF from Scratch
+# Lecture 5 - Extrapolation and RF from Scratch
 
 ##  1. <a name='Modeloverfitting'></a>Model overfitting
 

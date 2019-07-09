@@ -1,5 +1,5 @@
 <!-- vscode-markdown-toc -->
-- [Lesson 6 - Data Products](#Lesson-6---Data-Products)
+- [Lecture 6 - Data Products](#Lecture-6---Data-Products)
   - [1. <a name='DrivetrainApproachLinkhttps:www.oreilly.comideasdrivetrain-approach-data-products'></a>Drivetrain Approach Link](#1-a-nameDrivetrainApproachLinkhttpswwworeillycomideasdrivetrain-approach-data-productsaDrivetrain-Approach-Link)
   - [2. <a name='ReviewofRandomforestinterpretation'></a>Review of Random forest interpretation](#2-a-nameReviewofRandomforestinterpretationaReview-of-Random-forest-interpretation)
   - [3. <a name='Counter Example: Extrapolation'></a>Counter Example: Extrapolation](#3-a-nameCounter-Example-ExtrapolationaCounter-Example-Extrapolation)
@@ -10,7 +10,7 @@
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
 
-# Lesson 6 - Data Products
+# Lecture 6 - Data Products
 
 ##  1. <a name='DrivetrainApproachLinkhttps:www.oreilly.comideasdrivetrain-approach-data-products'></a>Drivetrain Approach [Link](https://www.oreilly.com/ideas/drivetrain-approach-data-products)
 

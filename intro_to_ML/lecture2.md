@@ -1,5 +1,5 @@
 <!-- vscode-markdown-toc -->
-- [Lesson 2 - Random Forest Deep Dive](#Lesson-2---Random-Forest-Deep-Dive)
+- [Lecture 2 - Random Forest Deep Dive](#Lecture-2---Random-Forest-Deep-Dive)
 	- [1. <a name='ModelEvaluation'></a>Model Evaluation](#1-a-nameModelEvaluationaModel-Evaluation)
 		- [1.1. <a name='R2Score'></a>R2 Score](#11-a-nameR2ScoreaR2-Score)
 		- [1.2. <a name='ValidationsetfortheKaggledata'></a>Validation set for the Kaggle data](#12-a-nameValidationsetfortheKaggledataaValidation-set-for-the-Kaggle-data)
@@ -16,7 +16,7 @@
 	autoSave=true
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
-# Lesson 2 - Random Forest Deep Dive
+# Lecture 2 - Random Forest Deep Dive
 
 
 ##  1. <a name='ModelEvaluation'></a>Model Evaluation

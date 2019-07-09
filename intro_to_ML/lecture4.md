@@ -1,5 +1,5 @@
 <!-- vscode-markdown-toc -->
-- [Lesson 4 - Feature Importance, Tree Interpreter](#Lesson-4---Feature-Importance-Tree-Interpreter)
+- [Lecture 4 - Feature Importance, Tree Interpreter](#Lecture-4---Feature-Importance-Tree-Interpreter)
   - [1. <a name='HyperparametersofinterestinRandomForests'></a>Hyper parameters of interest in Random Forests](#1-a-nameHyperparametersofinterestinRandomForestsaHyper-parameters-of-interest-in-Random-Forests)
     - [1.1. <a name='set_rf_samples'></a>`set_rf_samples`](#11-a-namesetrfsamplesasetrfsamples)
     - [1.2. <a name='min_samples_leaf'></a>`min_samples_leaf`](#12-a-nameminsamplesleafaminsamplesleaf)
@@ -14,7 +14,7 @@
 	autoSave=true
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
-# Lesson 4 - Feature Importance, Tree Interpreter
+# Lecture 4 - Feature Importance, Tree Interpreter
 
 ##  1. <a name='HyperparametersofinterestinRandomForests'></a>Hyper parameters of interest in Random Forests
 

@@ -1,8 +1,19 @@
-# LECTURE 11
+<!-- vscode-markdown-toc -->
+* 1. [Trigram with NB features](#TrigramwithNBfeatures)
+* 2. [Adding NB feature](#AddingNBfeature)
+* 3. [Embeddings](#Embeddings)
 
-Our next model is a version of logistic regression with Naive Bayes features described [here](https://www.aclweb.org/anthology/P12-2018). For every document we compute binarized features as described in the last lecture, but this time we use bigrams and trigrams too. Each feature is a log-count ratio. A logistic regression model is then trained to predict sentiment.
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
 
-### Trigram with NB features
+# Lecture 11 - Embeddings
+
+Our next model is a version of logistic regression with Naive Bayes features described [here](https://www.aclweb.org/anthology/P12-2018). For every document we compute binarized features as described in the last lecture, but this time we use bigrams and trigrams too. Each feature is a log-count ratio. A logistic regression model is then trained to predict the sentiment.
+
+##  1. <a name='TrigramwithNBfeatures'></a>Trigram with NB features
 
 <p align="center"> <img src="../figures/trigrams.png" width="450"> </p>
 
@@ -16,7 +27,7 @@ val_term_doc = veczr.transform(val)
 
 And this time around the size of our matrix is 25000 x 800000, with the vocabulary is not just single words but also couples and triplets : `['by vast', 'by vengeance', 'by vengeance .', 'by vera', 'by vera miles']`.
 
-#### Adding NB feature
+##  2. <a name='AddingNBfeature'></a>Adding NB feature
 
 The claims in the original paper:
 
@@ -45,9 +56,9 @@ After multiplying the term document matrix with r, everywhere a zero appears in 
 
 So in other words, this (xnb @ w1) is equal to x*r·w1 . So we could just change the weights to be r·w1 and get the same number. So this ought to mean that the change that we made to the independent variable should not have made any difference because we can calculate exactly the same thing without making that change. So there’s the question. Why did it make a difference? It is due to regularization, with regularization we want the weigths to go to zero, but after multiplying the inputs with the ratios which can be viewd as priors, we dictate our weights to only be very bing/very small in case we have great confidence it'll improve the results (loss is quite big), but in general, we don't want to diverge very much from the prior wich are naive bayes ratios.
 
-#### Embeddings
+##  3. <a name='Embeddings'></a>Embeddings
 
-We can implement the same model in PyTorch:
+In categorical variable, we transformed them into one hot vector and then fead them to our model, but the vectors are sparce and orthogonal to each other, so no similarity between the enteries, and also the dimensionnality equals the size of the vocabulary, making it quite big, so a better approach is to lean new vector representations for entery in a much lower and semantically richer space, this is done using a simple linear layer, where the weights are the new vectors we'd like to learn, the this matrix is of size (vocab_size x embs_size). We can implement the same model in PyTorch:
 
 ```python
 class DotProdNB(nn.Module):

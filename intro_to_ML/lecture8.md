@@ -1,4 +1,4 @@
-# Lesson 8 - Gradient Descent and Logistic Regression
+# Lecture 8 - Gradient Descent and Logistic Regression
 
 ## Normalization
 

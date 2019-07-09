@@ -1,4 +1,4 @@
-# Lesson 7 - Random Forest from Scratch
+# Lecture 7 - Random Forest from Scratch
 
 ### t-distribution
 

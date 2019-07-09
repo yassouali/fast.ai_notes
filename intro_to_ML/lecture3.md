@@ -1,7 +1,7 @@
-# Lesson 3 - Performance, Validation and Model Interpretation
+# Lecture 3 - Performance, Validation and Model Interpretation
 
 <!-- vscode-markdown-toc -->
-- [Lesson 3 - Performance, Validation and Model Interpretation](#Lesson-3---Performance-Validation-and-Model-Interpretation)
+- [Lecture 3 - Performance, Validation and Model Interpretation](#Lecture-3---Performance-Validation-and-Model-Interpretation)
   - [1. <a name='Importanceofgoodvalidationset'></a>Importance of good validation set](#1-a-nameImportanceofgoodvalidationsetaImportance-of-good-validation-set)
   - [2. <a name='Interpretingmachinelearningmodels'></a>Interpreting machine learning models](#2-a-nameInterpretingmachinelearningmodelsaInterpreting-machine-learning-models)
   - [3. <a name='Confidenceinthepredictions'></a>Confidence in the predictions](#3-a-nameConfidenceinthepredictionsaConfidence-in-the-predictions)

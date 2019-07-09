@@ -91,7 +91,7 @@ But generally it is better to use only a subset of the data to explore it, and n
 
 ___
 
-# Lesson 1 - Introduction to Random Forests
+# Lecture 1 - Introduction to Random Forests
 
 Now for the data, we'll use Kaggle data, and there is a trick to download it using cURL from the terminal, by capturing the GET resquest using the inspect element / Network of Firefox browser:
 
