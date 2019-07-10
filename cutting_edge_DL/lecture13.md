@@ -69,7 +69,7 @@ And one possibility is instead of decay to the lower learning rate, we can decay
 
 ##  2. <a name='Inception'></a>Inception
 
-Inception network is quite similar to resnet, we also pass the incoming features into a given layer directely to the next layer, and also elevate it by transforming the input thorugh some convolutions, in resnet we add to the input its convolved version, in inception we concatenate a convolved version of the input to it.
+Inception network is quite similar to resnet, we also pass the incoming features into a given layer directly to the next layer, and also elevate it by transforming the input thorugh some convolutions, in resnet we add to the input its convolved version, in inception we concatenate a convolved version of the input to it.
 
 <p align="center"> <img src="../figures/inception.png" width="300"> </p>
 

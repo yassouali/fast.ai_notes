@@ -363,7 +363,7 @@ We are going to create a custom learner, a custom model data class, and a custom
 
 For the model data class, it doesn’t inherit from anything, we just need pass the training set (a data loader), the validation set, and optionally a test set, plus some other parameters we might need like the bptt, the number of tokens (i.e. the vocab size), the padding index, and the path to where to save the files and models.
 
-Then all of the work happens inside `get_model`, get_model calls `get_language_model` that we will look at later, which just grabs a normal PyTorch nn.Module architecture, and chucks it on GPU. We wrapp the model in a LanguageModel and the LanguageModel is a subclass of BasicModel which almost does nothing except it defines layer groups so we can apply discriminative learning rates where different layers have different learning rates instean of providing learing rates for every layer because there can be a thousand layers. Then finally turn that into a learner by passing the model and it turns it into a learner. In this case, we have overridden learner to use the cross entropy as the default loss funciton.
+Then all of the work happens inside `get_model`, get_model calls `get_language_model` that we will look at later, which just grabs a normal PyTorch nn.Module architecture, and chucks it on GPU. We wrapp the model in a LanguageModel and the LanguageModel is a subclass of BasicModel which almost does nothing except it defines layer groups so we can apply discriminative learning rates where different layers have different learning rates instean of providing learning rates for every layer because there can be a thousand layers. Then finally turn that into a learner by passing the model and it turns it into a learner. In this case, we have overridden learner to use the cross entropy as the default loss funciton.
 
 ```python
 class LanguageModel(BasicModel):
@@ -517,7 +517,7 @@ class RNN_Encoder(nn.Module):
 
 Normally for language models, we look at at the perplexity which is just 2^(cross entropy). There is a lot of problems with comparing things based on cross entropy loss. and we can also look and the accuracy of the language model predictions.
 
-After training the language model on IMDB dataset, we can go ahead and save it to use it for classification, but no need to save the decoder, which only matters for the langauge model part, and we only need to use the RNN encoder and use its hidden states for text classification.
+After training the language model on IMDB dataset, we can go ahead and save it to use it for classification, but no need to save the decoder, which only matters for the language model part, and we only need to use the RNN encoder and use its hidden states for text classification.
 
 ##  5. <a name='TextClassification'></a>Text Classification
 
@@ -577,7 +577,7 @@ And after creating the dataset, we need to turn it into a datalaoder, to turn it
 * For validation set, we are going to define something that actually just sorts. It just deterministically sorts it so that all the shortest documents will be at the start, all the longest documents will be at the end, and that’s going to minimize the amount of padding.
 * For training sampler, we are going to create a sort-ish sampler which also sorts with a bit of randomness.
 
-SortSampler is class which has a length which is the length of the data source and has an iterator which is simply an iterator which goes through the data source sorted by length (which is passed in as key). For the SortishSampler, it basically does the same thing with a little bit of randomness, first we do a random permutation, divide the indices into sections of 50 * batchsize, and then we sort them based on their length (so the randomness comes from the fact we have 50 section, each one is sorted seperately instead of sorting the whole dataset), and then we place the largest sequence at the beginning so that the dataloader detect the amount of padding to add the rest the sequences of the batch (which are shuffled a second time).
+SortSampler is class which has a length which is the length of the data source and has an iterator which is simply an iterator which goes through the data source sorted by length (which is passed in as key). For the SortishSampler, it basically does the same thing with a little bit of randomness, first we do a random permutation, divide the indices into sections of 50 * batchsize, and then we sort them based on their length (so the randomness comes from the fact we have 50 section, each one is sorted separately instead of sorting the whole dataset), and then we place the largest sequence at the beginning so that the dataloader detect the amount of padding to add the rest the sequences of the batch (which are shuffled a second time).
 
 ```python
 class SortSampler(Sampler):

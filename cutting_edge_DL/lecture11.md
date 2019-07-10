@@ -1,28 +1,54 @@
-## Neural Machine Translation
+# Lecture 11: Neural Machine Translation
 
-In this lecture we're going to take a look into machine translation, the objective is to take a input sequence of a source langauge and outputing its translation in the target language, Machine translation has been around for a long time, but neural based machine translation only appeared a few years ago and it was not as good as the statistical machine translation approaches that use classic feature engineering and standard NLP approaches like stemming, fiddling around with word frequencies, n-grams, etc. But in recent years, the neural based methods surpased the more traditionnal ones, and their BLUE score is now getting better:
+<!-- vscode-markdown-toc -->
+- [Lecture 11: Neural Machine Translation](#Lecture-11-Neural-Machine-Translation)
+  - [1. <a name='FourbigwinsofNeuralMachineTranslation:'></a>Four big wins of Neural Machine Translation:](#1-a-nameFourbigwinsofNeuralMachineTranslationaFour-big-wins-of-Neural-Machine-Translation)
+  - [2. <a name='ApplicationofBiLSTMsattention:'></a>Application of BiLSTMs (& attention):](#2-a-nameApplicationofBiLSTMsattentionaApplication-of-BiLSTMs--attention)
+  - [3. <a name='TranslatingFrenchintoEnglish'></a>Translating French into English](#3-a-nameTranslatingFrenchintoEnglishaTranslating-French-into-English)
+    - [3.1. <a name='Data'></a>Data](#31-a-nameDataaData)
+    - [3.2. <a name='Tokenization'></a>Tokenization](#32-a-nameTokenizationaTokenization)
+    - [3.3. <a name='Wordrepresentation'></a>Word representation](#33-a-nameWordrepresentationaWord-representation)
+    - [3.4. <a name='Creatingthedatasetmodel'></a>Creating the dataset model](#34-a-nameCreatingthedatasetmodelaCreating-the-dataset-model)
+    - [3.5. <a name='Model'></a>Model](#35-a-nameModelaModel)
+    - [3.6. <a name='Lossfunction'></a>Loss function](#36-a-nameLossfunctionaLoss-function)
+  - [4. <a name='Goingfurther'></a>Going further](#4-a-nameGoingfurtheraGoing-further)
+    - [4.1. <a name='Bidirectionnality'></a>Bidirectionnality](#41-a-nameBidirectionnalityaBidirectionnality)
+    - [4.2. <a name='Teacherforcing'></a>Teacher forcing](#42-a-nameTeacherforcingaTeacher-forcing)
+    - [4.3. <a name='AttentionMecanism'></a>Attention Mecanism](#43-a-nameAttentionMecanismaAttention-Mecanism)
+  - [5. <a name='Imageretrieval:DevisePaperhttp:papers.nips.ccpaper5204-devise-a-deep-visual-semantic-embedding-model.pdf'></a>Image retrieval: Devise Paper](#5-a-nameImageretrievalDevisePaperhttppapersnipsccpaper5204-devise-a-deep-visual-semantic-embedding-modelpdfaImage-retrieval-Devise-Paper)
+    - [5.1. <a name='Searchimagenetclassesusinganimage'></a>Search imagenet classes using an image](#51-a-nameSearchimagenetclassesusinganimageaSearch-imagenet-classes-using-an-image)
+    - [5.2. <a name='Searchimagesusingaclass'></a>Search images using a class](#52-a-nameSearchimagesusingaclassaSearch-images-using-a-class)
+    - [5.3. <a name='Imagetoimagesearch'></a>Image to image search](#53-a-nameImagetoimagesearchaImage-to-image-search)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+In this lecture we're going to take a look into machine translation, the objective is to take a input sequence of a source language and outputing its translation in the target language, Machine translation has been around for a long time, but neural based machine translation only appeared a few years ago and it was not as good as the statistical machine translation approaches that use classic feature engineering and standard NLP approaches like stemming, fiddling around with word frequencies, n-grams, etc. But in recent years, the neural based methods surpassed the more traditional ones, and their BLUE score is now getting better:
 
 <p align="center"> <img src="../figures/neural_machine_BLUE.png" width="500"> </p>
 
-In this lecture, we're going to use sequence to sequence model, in which we're going to encode the input sequence into a hidden representation, and pass this vector into the decoder network to then deocder the information in it the output the translation of the input sequence, but this type of network can be used in various types of applications, like video annotation, image captionning ...
+In this lecture, we're going to use sequence to sequence model, in which we're going to encode the input sequence into a hidden representation, and pass this vector into the decoder network to then decoder the information in it the output the translation of the input sequence, but this type of network can be used in various types of applications, like video annotation, image captioning ...
 
-#### Four big wins of Neural Machine Translation:
+##  1. <a name='FourbigwinsofNeuralMachineTranslation:'></a>Four big wins of Neural Machine Translation:
 
-* End-to-end training: All the parameters are simultaneously optimized to minimise a loss function on the network's output.
-* Distributed representation share stength, better exploitation of word and phrase similarities.
+* End-to-end training: All the parameters are simultaneously optimized to minimize a loss function on the network's output.
+* Distributed representation share strength, better exploitation of word and phrase similarities.
 * Better exploitation of context, NMT can use much bigger context, both source and partial target text, to translate more accurately.
 * More fluent text generation, deep learning text generation is much higher quality.
 
-#### Application of BiLSTMs (& attention):
+##  2. <a name='ApplicationofBiLSTMsattention:'></a>Application of BiLSTMs (& attention):
 
-* Part of seepch tagging
+* Part of speech tagging
 * Named entity recognition
-* Syntactic parsing (contituency & dependency)
+* Syntactic parsing (constituency & dependency)
 * Reading comprehension
-* Question anwsering
+* Question answering
 * Text summarization
 
-### Translating French into English
+##  3. <a name='TranslatingFrenchintoEnglish'></a>Translating French into English
 
 We are going to try to translate French into English by following the standard neural network approach:
 
@@ -30,7 +56,7 @@ We are going to try to translate French into English by following the standard n
 * Architecture
 * Loss Function
 
-### Data
+###  3.1. <a name='Data'></a>Data
 
 As usual, we need `(x, y)` pairs. In this case, `x: French sentence`, `y: English sentence` which we will compare the model's predictions against. We need a lot of these tuples of French sentences with their equivalent English sentence, or what's called *parallel corpus*, which is harder to find than a corpus for a language model. For a language model, we just need text in some language, but for translation it's a bit harder, but there are some pretty good parallel corpus available for European languages. The European Parliament has every sentence in every European language. For French to English we can use some official canadian websites taht a have their content in both english and french, one of these datasets are the French/English parallel texts by Chris Callison-Burch: [link](http://www.statmt.org/wmt15/translation-task.html).
 
@@ -69,9 +95,11 @@ And so now we have 52,000 sentence pairs and here are some examples:
   ('Where did we come from?', "D'où venons-nous?"), ...]
 ```
 
-Note: Even if the question are generally sequences of limited size, the task of translation, from one language to an other with only 52,000 sentence pairs without any prior understanding of the taget and source langauge is quite a harde task to ask a neural net to do.
+Note: Even if the question are generally sequences of limited size, the task of translation, from one language to an other with only 52,000 sentence pairs without any prior understanding of the target and source language is quite a hard task to ask a neural net to do.
 
-**Tokenization:** Now we msut construct the two vocabularies of the source and target language, we can unzip the list of pairs to get both the list of eng and fr question seperately, and then we can call the fastai Tokenizer, which is a wrapper over the spacy tokenizer; but to also tokenize the french sentences we need to first install the french model with the command: `python -m spacy download fr`, and then:
+###  3.2. <a name='Tokenization'></a>Tokenization
+
+Now we must construct the two vocabularies of the source and target language, we can unzip the list of pairs to get both the list of eng and fr question separately, and then we can call the fastai Tokenizer, which is a wrapper over the spacy tokenizer; but to also tokenize the french sentences we need to first install the french model with the command: `python -m spacy download fr`, and then:
 
 ```python
 en_tok = Tokenizer.proc_all_mp(partition_by_cores(en_qs))
@@ -87,9 +115,9 @@ en_tok[0], fr_tok[0]
  ['qu’', 'est', '-ce', 'que', 'la', 'lumière', '?'])
 ```
 
-We can see that the results of tokenization in english and french are quite different, if we use the same tokenizer we'll miss a lot of information in french, given that the apostrophes are par of the words unlike english, on a side there is some language in which we can directely use a tokenizer, like Chinese, one solution is to use [sentence piece](https://github.com/google/sentencepiece) which splits things into arbitrary sub-word.
+We can see that the results of tokenization in english and french are quite different, if we use the same tokenizer we'll miss a lot of information in french, given that the apostrophes are par of the words unlike english, on a side there is some language in which we can directly use a tokenizer, like Chinese, one solution is to use [sentence piece](https://github.com/google/sentencepiece) which splits things into arbitrary sub-word.
 
-Now we need to turn the examples into numerical values, in which each token in the sentence is reprented as its indices in the vocabulary, but first we'll only keep the small sentences, this is done by first finding the length of 90% of sentences, and then keeping the example that are less than 30 tokens, and save the results as pickles. 
+Now we need to turn the examples into numerical values, in which each token in the sentence is represented as its indices in the vocabulary, but first we'll only keep the small sentences, this is done by first finding the length of 90% of sentences, and then keeping the example that are less than 30 tokens, and save the results as pickles. 
 
 ```python
 np.percentile([len(o) for o in en_tok], 90)
@@ -151,9 +179,9 @@ fr_ids,fr_itos,fr_stoi = load_ids('fr')
 # -> ['qu’', 'est', '-ce', 'que', 'la', 'lumière', '?', '_eos_']
 ```
 
-#### Word representation
+###  3.3. <a name='Wordrepresentation'></a>Word representation
 
-Now, in this case, we need to convert our word, from one hot representations into a embeddings, but in this case, unlink ULMFit we can first learn a language model (in both the target and source language) and then use its the embeddings in machine translation beacause we have so litte examples, so we're going to use already availble word vectors, like word2vec, glove, or fasttext, which is better than the previous two:
+Now, in this case, we need to convert our word, from one hot representations into a embeddings, but in this case, unlink ULMFit we can first learn a language model (in both the target and source language) and then use its the embeddings in machine translation because we have so little examples, so we're going to use already available word vectors, like word2vec, glove, or fasttext, which is better than the previous two:
 
 `fasttext` Python library is not available in PyPI but here is a handy trick [35:03]. given tha the github repo has `setup.py` and `reqirements.txt` in it, we can just use `git+` at the start of the url, and then stick that in the pip install, import it and load the word vector for french and english, but first we need to download the fasttext word vectors for both language from the [Wiki](https://fasttext.cc/docs/en/pretrained-vectors.html), there are a text version and a binary version, the binary version is faster.
 
@@ -165,7 +193,7 @@ en_vecs = ft.load_model(str((PATH/'wiki.en.bin')))
 fr_vecs = ft.load_model(str((PATH/'wiki.fr.bin')))
 ```
 
-We are going to convert it into a standard Python dictionary to make it a bit easier to work with. This is just going through each word with a dictionary comprehension and save it as a pickle dictionary, we're also going to get the words and their frequencoes 
+We are going to convert it into a standard Python dictionary to make it a bit easier to work with. This is just going through each word with a dictionary comprehension and save it as a pickle dictionary, we're also going to get the words and their frequencies. 
 
 ```python
 def get_vecs(lang, ft_vecs):
@@ -203,7 +231,7 @@ en_vecs.mean(),en_vecs.std()
 # (0.0075652334, 0.29283327)
 ```
 
-#### Creating the dataset model
+###  3.4. <a name='Creatingthedatasetmodel'></a>Creating the dataset model
 
 Often corpuses have a pretty long tailed distribution of sequence length and it’s the longest sequences that tend to overwhelm how long things take, how much memory is used, etc. So in this case, we are going to grab 99th to 97th percentile of the English and French and truncate them to that amount.
 
@@ -218,7 +246,7 @@ en_ids_tr = np.array([o[:enlen_90] for o in en_ids])
 fr_ids_tr = np.array([o[:frlen_90] for o in fr_ids])
 ```
 
-We’ve got our tokenized, numerixalized English and French datasets, now we need to create a dataset pytorch object, and then use the dataset to create a datalaoder, the dataset is quite simple, we set our example in `__init__` and then we declare `__getitem__` that return a given example / label when an idex is passed, and the `__len__` method that return the number of examples, so we then create val and train dataset for both language, the validation partition is 10% of the total dataset.
+We’ve got our tokenized, we've also converted the tokens into numerical values for the English and French datasets, now we need to create a dataset pytorch object, and then use the dataset to create a datalaoder, the dataset is quite simple, we set our example in `__init__` and then we declare `__getitem__` that return a given example / label when an index is passed, and the `__len__` method that return the number of examples, so we then create val and train dataset for both language, the validation partition is 10% of the total dataset.
 
 ```python
 np.random.seed(42)
@@ -263,15 +291,15 @@ md = ModelData(PATH, trn_dl, val_dl)
 
 And that last thing, is to merge the val and train loader into a model data spectific to the fastai library, to then use them for the learner.
 
-### Model
+###  3.5. <a name='Model'></a>Model
 
 <p align="center"> <img src="../figures/s2s_architecture.png" width="500"> </p>
 
-For neural machine translation, unlike the RNN based models used in language modeling, where we can predict the upcoming word for each input, in MT we can have an output sequence of a different size than the input sequence, so we can simply output a predition at each time step, and the solution for this problem, is to first encode the input sentence, using an encoder RNN (similar to the RNN used in language modeling) with a the input encoded as tokens in the source language, and then use that last hidden activation (a compressed representation of the input sequence, we can use the same trick used in UMLFiT to cancat the upper activation, with the mean and max pool of the other activations) as an input to the decoder network to output the prediciton, which are probabilities over the whole vocabulaty of the target language.
+For neural machine translation, unlike the RNN based models used in language modeling, where we can predict the upcoming word for each input, in MT we can have an output sequence of a different size than the input sequence, so we can simply output a prediction at each time step, and the solution for this problem, is to first encode the input sentence, using an encoder RNN (similar to the RNN used in language modeling) with a the input encoded as tokens in the source language, and then use that last hidden activation (a compressed representation of the input sequence, we can use the same trick used in UMLFiT to concat the upper activation, with the mean and max pool of the other activations) as an input to the decoder network to output the prediction, which are probabilities over the whole vocabulary of the target language.
 
 Training a translation model takes a long time. Google’s translation model has eight layers of RNN stacked on top of each other. In our case we're only going to use a two layer network, but there is no conceptual difference between eight layers and two layers, the RNN cells we'll use are GRUs, which are simplification of LSTMs with similar performances.
 
-First we need to create an embedding layer, and intilize it with th fastText weights, for both the decoder and the encoder, for the naming convention, we refer to the encoder parts as `enc` and the decoder parts as `dec`, so we'll a function that takes the word vectors and the vocabulary, creates a new embedding matrix and assign the word embedding of fasttext into the embedding matrix (after we see that from our vocabulary of 30000 words we're only missing ~3000 in english and ~2000 in french, and we're going to assign to them the mean).
+First we need to create an embedding layer, and initialize it with th fastText weights, for both the decoder and the encoder, for the naming convention, we refer to the encoder parts as `enc` and the decoder parts as `dec`, so we'll a function that takes the word vectors and the vocabulary, creates a new embedding matrix and assign the word embedding of fasttext into the embedding matrix (after we see that from our vocabulary of 30000 words we're only missing ~3000 in english and ~2000 in french, and we're going to assign to them the mean).
 
 ```python
 def create_emb(vecs, itos, em_sz):
@@ -326,11 +354,12 @@ class Seq2SeqRNN(nn.Module):
         return V(torch.zeros(self.nl, bs, self.nh))
 ```
 
-So our seq2seq model, we'll contain two layers of RNN cells, each one with a hidden state of size 256, we create our two embedding matrices, both with 15% dropout, one for the decoder and one encoder and initialize them with our function above, and then we create the GRUs layers for the decoder (hidden size equal the embedding matrix size) and the encoder, and finaly two linear layers, one for the decoder taking the last hidden state and outputing a vector of size `emb_sz_dec` to be then fed to the decoder, and the decoder linear layer that also takes the output and gives us at each time step the probabilities over all the words in the vocabulary.
+So our seq2seq model, we'll contain two layers of RNN cells, each one with a hidden state of size 256, we create our two embedding matrices, both with 15% dropout, one for the decoder and one encoder and initialize them with our function above, and then we create the GRUs layers for the decoder (hidden size equal the embedding matrix size) and the encoder, and finally two linear layers, one for the decoder taking the last hidden state and outputing a vector of size `emb_sz_dec` to be then fed to the decoder, and the decoder linear layer that also takes the output and gives us at each time step the probabilities over all the words in the vocabulary.
 
-And at each forward step, we initialize the hidden activations with zeros, and then pass the input through the encoder to obtain the last hidden activation, that we pass to the linear layer and then to the decoder, in which, given a sequence length, at each time step we use the current hidden state to predict a possible translattion, in this case, at each time step, the next input to our decoder in the previous prediction, and at the end we return all the predicion (the probabilities) to then pass to the loss function.
+And at each forward step, we initialize the hidden activations with zeros, and then pass the input through the encoder to obtain the last hidden activation, that we pass to the linear layer and then to the decoder, in which, given a sequence length, at each time step we use the current hidden state to predict a possible translation, in this case, at each time step, the next input to our decoder in the previous prediction, and at the end we return all the prediction (the probabilities) to then pass to the loss function.
 
-**Loss function:** The loss function is categorical cross entropy loss. We have a list of probabilities for each of our classes where the classes are all the words in our English vocab and we have a target which is the correct class (i.e. which is the correct word at this location). There are two tweaks which is why we need to write our own loss function but we can see basically it is going to be cross entropy loss:
+###  3.6. <a name='Lossfunction'></a>Loss function
+The loss function is categorical cross entropy loss. We have a list of probabilities for each of our classes where the classes are all the words in our English vocab and we have a target which is the correct class (i.e. which is the correct word at this location). There are two tweaks which is why we need to write our own loss function but we can see basically it is going to be cross entropy loss:
 
 1. If the generated sequence length is shorter than the sequence length of the target, we need to add some padding. PyTorch padding function requires a tuple of 6 to pad a rank 3 tensor (sequence length, batch size, number of words in the vocab). Each pair represents padding before and after that dimension.
 2. Flatten out the predictions given that F.cross_entropy expects a rank 2 tensor.
@@ -344,7 +373,7 @@ def seq2seq_loss(input, target):
     return F.cross_entropy(input.view(-1,nc), target.view(-1))
 ```
 
-And per usual, we create our optimizer, our model, and then use them to creata a learner, find the correct learing rate and then fit our model.
+And per usual, we create our optimizer, our model, and then use them to create a learner, find the correct learning rate and then fit our model.
 
 ```python
 opt_fn = partial(optim.Adam, betas=(0.8, 0.99))
@@ -359,7 +388,7 @@ lr=3e-3
 learn.fit(lr, 1, cycle_len=12, use_clr=(20,10))
 ```
 
-And we can then test our model, but simply passing some examples from the validation set and then taking the argmax of the predictions, and converting the index to a string, and the print the results until we encouter an `_eos_` token, we print the source language, the prediction and the ground truth.
+And we can then test our model, but simply passing some examples from the validation set and then taking the argmax of the predictions, and converting the index to a string, and the print the results until we encounter an `_eos_` token, we print the source language, the prediction and the ground truth.
 
 ```python
 x,y = next(iter(val_dl))
@@ -381,11 +410,11 @@ for i in range(180,190):
 # who regulates the doors doors ? _eos_
 ```
 
-### Going further
+##  4. <a name='Goingfurther'></a>Going further
 
-#### Bidirectionnality
+###  4.1. <a name='Bidirectionnality'></a>Bidirectionnality
 
-One simple trick to add, is to process the input sequence in the encoder in a bidirectionnal way, for language modeling with UMLFiT, we first trained to model using the original corpus for language modeling and then classification, and then fliped the whole corpus the then trained another model to do language modeling and text classification, and then use both models an an ensemble and average their predictions, in our case, to incorporate the bidirectionnality into our model, all we need to do is create a bidirectionnal GRUs, that will take two hidden vectors as an input (forward and backward) and at the end of the sequence will give us also two vectors, that we are going to feed to a linear layer (taking this time arround a vector of size N_h * 2), and pass the output to the deocder, for the decoder, if we used bidirectionnality, at each prediction the hidden state will contain information about the output, so we can't use directely, but we can use the same approach as ULMFiT to have two decoders and use them as an ensemble.
+One simple trick to add, is to process the input sequence in the encoder in a bidirectionnal way, for language modeling with UMLFiT, we first trained to model using the original corpus for language modeling and then classification, and then fliped the whole corpus the then trained another model to do language modeling and text classification, and then use both models an an ensemble and average their predictions, in our case, to incorporate the bidirectionnality into our model, all we need to do is create a bidirectionnal GRUs, that will take two hidden vectors as an input (forward and backward) and at the end of the sequence will give us also two vectors, that we are going to feed to a linear layer (taking this time arround a vector of size N_h * 2), and pass the output to the deocder, for the decoder, if we used bidirectionnality, at each prediction the hidden state will contain information about the output, so we can't use directly, but we can use the same approach as ULMFiT to have two decoders and use them as an ensemble.
 
 ```python
 class Seq2SeqRNN_Bidir(nn.Module):
@@ -399,7 +428,7 @@ class Seq2SeqRNN_Bidir(nn.Module):
 
 We then retrain our model and find better performances.
 
-#### Teacher forcing
+###  4.2. <a name='Teacherforcing'></a>Teacher forcing
 
 In our current implementation, at each time step we pass as input to the decoder that last prediction, but the problem with such approach, is that we're we start learning the predictions are totally random, and it will take a lot of time to get to good predcition, so the solution is to pass the labels, or the correct tanslation at each time step, as the input of the next time step, but this is done just during training, and during inference we use ealier approach.
 
@@ -443,7 +472,7 @@ class Seq2SeqRNN_TeacherForcing(nn.Module):
 
 And with this additional trick, we get better results in a shorter time.
 
-#### Attention Mecanism
+###  4.3. <a name='AttentionMecanism'></a>Attention Mecanism
 
 Expecting the entirety of the input sentence to be summarized into a single hidden vector from the encoder is asking a lot. It has to know what was said, when and how, to be able to create the correct translation. The idea of attention is giving the decoder the posibility to look back at the input hidden states at each step of the decoding process, so at each time step, the decoder will get 3 inputs, the usual two, the last hidden state of the RNN cell, the current input, and a vector containing a weighted sum of all the hidden states in the input, this vector in constructed with a set of leanable weights for each time step, the total number of these weights are of size: # input sq length x # output sq length.
 
@@ -511,7 +540,7 @@ Teacher forcing had 3.49 and now with nearly exactly the same thing but we’ve 
 
 And we see that there is a clear correlation between the position of the current word we want to translate, and the input words the decoder focuses on, which is totaly reasonable.
 
-## Devise [Paper](http://papers.nips.cc/paper/5204-devise-a-deep-visual-semantic-embedding-model.pdf)
+##  5. <a name='Imageretrieval:DevisePaperhttp:papers.nips.ccpaper5204-devise-a-deep-visual-semantic-embedding-model.pdf'></a>Image retrieval: Devise [Paper](http://papers.nips.cc/paper/5204-devise-a-deep-visual-semantic-embedding-model.pdf)
 
 In this last section of the lecture, we're going to try to merge both world, the visual and textual representations, the objective here is to represent the images and their classes (words) in the same space / manifold, this way we can use a search word (given its word vector) and find the images with similar representation, that will hopefully be of the classes we're trying to find.
 
@@ -628,7 +657,7 @@ learn.precompute=False
 learn.freeze_to(1)
 ```
 
-### Search imagenet classes using an image
+###  5.1. <a name='Searchimagenetclassesusinganimage'></a>Search imagenet classes using an image
 
 Now we can use our model to find the classes of a given image (some classes that are not even in imagenet categories), so we take some images from the validation set, pass them through our model in eval mode, denormalize them (from tensor to images), and we can display them.
 
@@ -684,7 +713,7 @@ idxs, dists = get_knns(nn_wvs, pred_wv)
 #    ['spoonbill', 'bustard', 'oystercatcher'], ...
 ```
 
-### Search images using a class
+###  5.2. <a name='Searchimagesusingaclass'></a>Search images using a class
 
 Now we can do the inverse, and given a class, we'll get its fasttext embeddings, and compare to all the embeddings of imagenet images, and get the images with the word embeddings with class we're searching.
 
@@ -726,7 +755,7 @@ show_imgs([open_image(PATH/md.val_ds.fnames[i]) for i in idxs[:3]], 3, figsize=(
 
 <p align="center"> <img src="../figures/imagenet_search3.png" width="500"> </p>
 
-### Image to image search
+###  5.3. <a name='Imagetoimagesearch'></a>Image to image search
 
 We can also seach the imagenet images using their emebeddings, and find the images with similar embeddings:
 

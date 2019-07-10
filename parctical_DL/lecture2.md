@@ -60,7 +60,7 @@ Here’s a picture of how that might look if we reset the learning rates 3 times
 
 From the paper [Snapshot Ensembles](https://arxiv.org/abs/1704.00109)
 
-If we plot the learning rate while using “cyclic LR schedule” we get (the value used in the starting point is the one obtained using learing rate finder:
+If we plot the learning rate while using “cyclic LR schedule” we get (the value used in the starting point is the one obtained using learning rate finder:
 
 <p align="center"> <img src="../figures/cyclic_lr.png" width="300"> </p>
 

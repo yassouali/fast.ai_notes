@@ -461,7 +461,7 @@ Notice that we are no longer doing outp[-1] since we want to keep all of them. B
 * 84 probabilities
 * 512 minibatch
 
-And for this case we'll right our custom loss function, we first transpose the first two axes because the target are `batch x seq` and the outputs of the model are `seq x batch`, and then we  flatten the inputs and taget:
+And for this case we'll right our custom loss function, we first transpose the first two axes because the target are `batch x seq` and the outputs of the model are `seq x batch`, and then we  flatten the inputs and target:
 
 ```python
 def nll_loss_seq(inp, targ):
