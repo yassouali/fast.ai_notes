@@ -1,11 +1,35 @@
- 
-### Object detection
+<!-- vscode-markdown-toc -->
+- [Lecture 2: Object detection part 2](#Lecture-2-Object-detection-part-2)
+  - [1. <a name='Objectlocalization'></a>Object localization](#1-a-nameObjectlocalizationaObject-localization)
+    - [1.1. <a name='Architecture'></a>Architecture](#11-a-nameArchitectureaArchitecture)
+    - [1.2. <a name='LossFunction'></a>Loss Function](#12-a-nameLossFunctionaLoss-Function)
+  - [2. <a name='Objectdetection'></a>Object detection](#2-a-nameObjectdetectionaObject-detection)
+    - [2.1. <a name='Multilabelclassification'></a>Multi label classification](#21-a-nameMultilabelclassificationaMulti-label-classification)
+    - [2.2. <a name='SSDandYOLO'></a>SSD and YOLO](#22-a-nameSSDandYOLOaSSD-and-YOLO)
+    - [2.3. <a name='Thearchitecture'></a>The architecture](#23-a-nameThearchitectureaThe-architecture)
+    - [2.4. <a name='Matchingproblem'></a>Matching problem](#24-a-nameMatchingproblemaMatching-problem)
+    - [2.5. <a name='Howdoweinterprettheoutputs'></a>How do we interpret the outputs ?](#25-a-nameHowdoweinterprettheoutputsaHow-do-we-interpret-the-outputs)
+    - [2.6. <a name='Classificationloss:binarycrossentropylossinsteadofcrossentropy'></a>Classification loss: binary cross entropy loss instead of cross entropy](#26-a-nameClassificationlossbinarycrossentropylossinsteadofcrossentropyaClassification-loss-binary-cross-entropy-loss-instead-of-cross-entropy)
+    - [2.7. <a name='Results'></a>Results](#27-a-nameResultsaResults)
+    - [2.8. <a name='Addingmoreanchors'></a>Adding more anchors](#28-a-nameAddingmoreanchorsaAdding-more-anchors)
+    - [2.9. <a name='Model'></a>Model](#29-a-nameModelaModel)
+    - [2.10. <a name='FocalLoss:'></a>Focal Loss :](#210-a-nameFocalLossaFocal-Loss)
+    - [2.11. <a name='NonMaximumSuppression'></a>Non Maximum Suppression](#211-a-nameNonMaximumSuppressionaNon-Maximum-Suppression)
 
-#### Object localization
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
 
-In this lecture we'll continue with object detection, the last thing we explored was predecting bounding boxes of the biggest objects in the image, now we'll do an object localization task, doing both a localization and a classification task of the bigget object in the image.
 
-We first start by adding some data augmentation, mainly a random rotation, a random lignting shift, a random flip and a random dihedral, and the same transformation needs to be applied to the bounding box coordianates or will otherwise has a box missalignement.
+# Lecture 2: Object detection part 2 
+
+##  1. <a name='Objectlocalization'></a>Object localization
+
+In this lecture we'll continue with object detection, the last thing we explored was predicting bounding boxes of the biggest objects in the image, now we'll do an object localization task, doing both a localization and a classification task of the biggest object in the image.
+
+We first start by adding some data augmentation, mainly a random rotation, a random light shift, a random flip and a random dihedral, and the same transformation needs to be applied to the bounding box coordinates or will otherwise has a box misalignment.
 
 ```python
 tfm_y = TfmType.COORD
@@ -21,7 +45,9 @@ Here we do maximum of 3 degree rotation to avoid this problem. It also only rota
 
 Now to do object detection, we need a custom head for our resnet architecture, and this time with one outputs having C + 4 number of elements, C outputs for classification with an output equals the number of classes, and a regression branch with four outputs, for the dataset, we concatenate the two dataset we saved earlier in the form of pandas dataframe, one with only the coordinates and one with the classes.
 
-**Architecture:** Fot the architecture, we’ll use an extra linear layer this time, plus some dropout, to help us train a more flexible model. so we add some linear layer with dropout, going from 512 x 7 x 7 -> 256 -> C + 4.
+###  1.1. <a name='Architecture'></a>Architecture
+
+For the architecture, we’ll use an extra linear layer this time, plus some dropout, to help us train a more flexible model. so we add some linear layer with dropout, going from 512 x 7 x 7 -> 256 -> C + 4.
 
 ```
 head_reg4 = nn.Sequential(
@@ -36,7 +62,8 @@ head_reg4 = nn.Sequential(
 )
 ```
 
-**Loss Function:** The loss function needs to look at these 4 + len(cats) activations and decide if they are good, whether these numbers accurately reflect the position and class of the largest object in the image. We know how to do this. For the first 4 activations, we will use L1Loss just like we did before (L1-Loss is like a Mean Squared Error, instead of sum of squared errors, it uses sum of absolute values). For rest of the activations, we can use cross entropy loss.
+###  1.2. <a name='LossFunction'></a>Loss Function
+The loss function needs to look at these 4 + len(cats) activations and decide if they are good, whether these numbers accurately reflect the position and class of the largest object in the image. We know how to do this. For the first 4 activations, we will use L1Loss just like we did before (L1-Loss is like a Mean Squared Error, instead of sum of squared errors, it uses sum of absolute values). For rest of the activations, we can use cross entropy loss.
 
 ```python
 def detn_loss(input, target):
@@ -51,7 +78,7 @@ def detn_acc(input, target):
     return accuracy(c_i, c_t)
 ```
 
-We multiply the classfication loss with 20 so that both the losses will have similar ranges, and for the predicted coordinates, we have a sigmoid as output for regression, so we have outputs in the range of [0, 1], and knowing that the size of the image is 224 x 224, we multiply it by 224 to have the same range too.
+We multiply the classification loss with 20 so that both the losses will have similar ranges, and for the predicted coordinates, we have a sigmoid as output for regression, so we have outputs in the range of [0, 1], and knowing that the size of the image is 224 x 224, we multiply it by 224 to have the same range too.
 
 And then we find the learning rate, fit the custom head, unfreeze (last two layer ad then the whole model) and use differential learning rates to get better resutls.
 
@@ -65,13 +92,15 @@ learn.unfreeze()
 learn.fit(lrs/10, 1, cycle_len=10, use_clr=(32,10))
 ```
 
-And we end up with the same results (81% accuracy for classification) nad a loss of 18.55 for the regression, which are similar to the two networks that did each task separately. This is not surprising because ResNet was designed to do classification so we wouldn’t expect to be able to improve things in such a simple way. It certainly wasn’t designed to do bounding box regression. It was explicitly actually designed in such a way to not care about geometry, it takes the last 7 by 7 grid of activations and averages them all together throwing away all the information about where everything came from. Interestingly, when we do classification and bounding box at the same time, the L1 seems a little bit better than when we just did bounding box regression, this might be beacuse the classification information backpropagated through the network helps also with the regression in an unexpected way.
+And we end up with the same results (81% accuracy for classification) and a loss of 18.55 for the regression, which are similar to the two networks that did each task separately. This is not surprising because ResNet was designed to do classification so we wouldn’t expect to be able to improve things in such a simple way. It certainly wasn’t designed to do bounding box regression. It was explicitly actually designed in such a way to not care about geometry, it takes the last 7 by 7 grid of activations and averages them all together throwing away all the information about where everything came from. Interestingly, when we do classification and bounding box at the same time, the L1 seems a little bit better than when we just did bounding box regression, this might be because the classification information backpropagated through the network helps also with the regression in an unexpected way.
 
-### Multi label classification
+##  2. <a name='Objectdetection'></a>Object detection
+
+###  2.1. <a name='Multilabelclassification'></a>Multi label classification
 
 The objective now is to go from detecting one object, the biggest one, to detecting all of the  objects present in the image, what we call multi label classification.
 
-First we'll start by detecting all the classes prsent in the image, for this we start by constructing a new data frame, this time containing all the classes in a given image.
+First we'll start by detecting all the classes present in the image, for this we start by constructing a new data frame, this time containing all the classes in a given image.
 
 ```python
 mc = [set([cats[p[1]] for p in trn_anno[o]]) for o in trn_ids]
@@ -84,21 +113,21 @@ df.to_csv(MC_CSV, index=False)
 
 And the created dataset has fields like `1 000017.jpg person horse` and `2 000023.jpg bicycle person`.
 
-And this time, the model used is similar to the one used for image classification, but with a different loss funcition, using sigmoid loss function instead of a softmax, we then apply the same approach as usual, starting by finding a learning rate, and fitting the model using cyclic learning rate.
+And this time, the model used is similar to the one used for image classification, but with a different loss function, using sigmoid loss function instead of a softmax, we then apply the same approach as usual, starting by finding a learning rate, and fitting the model using cyclic learning rate.
 
-### SSD and YOLO
+###  2.2. <a name='SSDandYOLO'></a>SSD and YOLO
 
-Now we'll tackle the problem of detecting all the objects in a given image, there is generally two approaches to do this, SSD (single shot detection) or YOLO (we only look once), before comparing the two approches, first we need to define the output of our network, let's say we divide our input image into 4x4 blocks, and the objective is to predict the class of the object in each block, and their coordinates, and of course one of the possible outputs is background, so for a 4x4 blocks, the number of ouputs needs to be 16 x (C + 4), and C is the number of classes, for SSD, the last layer is contructed using a convolutionnal layer, going from 7x7x512 to 4x4x(4+C) using a 3x3 convolution with stride 2, and for YOLO, we can simply use a fully convolutionnal layer to go from 7x7x512 to a flattened 4x4x(4+C), this is illustrated in the figure bellow ([source](https://medium.com/@hiromi_suenaga/deep-learning-2-part-2-lesson-9-5f0cf9e4bb5b))
+Now we'll tackle the problem of detecting all the objects in a given image, there is generally two approaches to do this, SSD (single shot detection) or YOLO (you only look once), before comparing the two approaches, first we need to define the output of our network, let's say we divide our input image into 4x4 blocks, and the objective is to predict the class of the object in each block, and their coordinates, and of course one of the possible outputs is background, so for a 4x4 blocks, the number of outputs needs to be 16 x (C + 4), and C is the number of classes, for SSD, the last layer is constructed using a convolutional layer, going from 7x7x512 to 4x4x(4+C) using a 3x3 convolution with stride 2, and for YOLO, we can simply use a fully convolutional layer to go from 7x7x512 to a flattened 4x4x(4+C), this is illustrated in the figure bellow ([source](https://medium.com/@hiromi_suenaga/deep-learning-2-part-2-lesson-9-5f0cf9e4bb5b))
 
 <p align="center"> <img src="../figures/ssd_and_yolo.png" width="450"> </p>
 
 The latest version of YOLO (Yolo v3) is doing the same thing as SSD.
 
-In SSD, by using a convolution from 7x7 to 4x4, each one cell of the last layer that is responsible of predicting the object class and coordinnates of the correct region in the input image, given that each cell of 4x4 has an receptive field the correspond to the correct region in the input image.
+In SSD, by using a convolution from 7x7 to 4x4, each one cell of the last layer that is responsible of predicting the object class and coordinates of the correct region in the input image, given that each cell of 4x4 has an receptive field the correspond to the correct region in the input image.
 
-#### The architecture
+###  2.3. <a name='Thearchitecture'></a>The architecture
 
-So we first start by applying some convolutions 3x3 convolutions with stride one and some padding, followed by another conv 3x3 but this time with a stride of two, and now we'll end up with an output of 4x4x512 (StdConv), after this we'll need to add two branches, one to predict the probabilities for each class for each box (C+1 channels, so C+1 for each one of the 4x4 boxes), and another is to predict 4 coordinates for each box. At the end, we flatten out the convolution because the loss function expects flattened out tensor.
+So we first start by applying some convolutions 3x3 with stride one and some padding, followed by another conv 3x3 but this time with a stride of two, and now we'll end up with an output of 4x4x512, after this we'll need to add two branches, one to predict the probabilities for each class for each box (C+1 channels, so C+1 for each one of the 4x4 boxes), and another is to predict 4 coordinates for each box. At the end, we flatten out the convolution because the loss function expects flattened out tensor.
 
 ```python
 class StdConv(nn.Module):
@@ -147,7 +176,7 @@ head_reg4 = SSD_Head(k, -3.)
 
 In this case, for each cell in the image (4x4), we have only one anchor per cell, so k=1 in this first and simple case.
 
-#### Matching problem
+###  2.4. <a name='Matchingproblem'></a>Matching problem
 
 First, we need to begin by assigning to each cell one of the boxes in the training data, the one that is centered in a given cell for example, and for the rest we need to predict background, So the loss function needs to take each of the objects in the image and match them to one of these grid cells, and compare them to the prediction made by the model.
 
@@ -157,7 +186,7 @@ Each of these square boxes, different papers call them different things: anchor 
 
 What we are going to do for this loss function is we are going to go through a matching problem where we are going to take every one of these 16 boxes and see which one of these three ground truth objects has the highest amount of overlap with a given cell. To do this, we have to have some way of measuring amount of overlap and a standard function for this is called Jaccard index (IoU).
 
-So first, we begin by calculating the jacard index for each ground truth object with all the cells in the image (4x4 cells), now in the example above we have three ground truth boxes, with 16 cells, so we have a matrix of size 3x16, each element in the jacard index of each ground truth object with each cell, and then we can see the cell with the height overlap for each ground truth (dim = 1) or the max overlap for each cell (dim = 0).
+So first, we begin by calculating the jaccard index for each ground truth object with all the cells in the image (4x4 cells), now in the example above we have three ground truth boxes, with 16 cells, so we have a matrix of size 3x16, each element in the jacard index of each ground truth object with each cell, and then we can see the cell with the height overlap for each ground truth (dim = 1) or the max overlap for each cell (dim = 0).
 
 ```bash
 # JACARD VALUES
@@ -176,18 +205,18 @@ Columns 8 to 15
 0   0   0   0   0   0   0   0   1   1   0   2   1   1   0   0
 ```
 
-Now we use these values, the max overlap (the three cells with the max jacard values) gets assigned the objects in questions, and for the rest, each cell gets assigned the object with which it has an overlap greater than 0.5, the rest is labeled background.
+Now we use these values, the max overlap (the three cells with the max jaccard values) gets assigned the objects in question, and for the rest, each cell gets assigned the object with which it has an overlap greater than 0.5, the rest is labeled background.
 
 ```bash
 # ASSIGNEMENT
 ['bg',  'bg',  'bg',  'bg',  'bg',  'bg',  'bg',  'bg',  'bg',  'bg',  'bg',  'sofa',  'bg',  'diningtable',  'chair',  'bg']
 ```
 
-After the matching stage, we can use an L1 loss between the coordinates ground truth objects, and the coordinates predicted for each one of cell that are mached with these groung truth objects, and we do the same for the second outputs that are used for classification, but this time using cross entropy.
+After the matching stage, we can use an L1 loss between the coordinates ground truth objects, and the coordinates predicted for each one of cell that are matched with these ground truth objects, and we do the same for the second outputs that are used for classification, but this time using cross entropy.
 
-In the end, for each image, we'll endup with 16 predicted boxes, the majority of which will be ground truth.
+In the end, for each image, we'll end up with 16 predicted boxes, the majority of which will be ground truth.
 
-#### How do we interpret the outputs ?
+###  2.5. <a name='Howdoweinterprettheoutputs'></a>How do we interpret the outputs ?
 
 The way we interpret the activation is defined as:
 
@@ -199,11 +228,11 @@ def actn_to_bb(actn, anchors):
     return hw2corners(actn_centers, actn_hw)
 ```
 
-We grab the outputs, we stick them through tanh which forces it to be within [-1,1] range and multiply them by the grid size for each cell. We then grab the actual position of the anchor boxes, and we will move them around according to the value of the outputs divided by two (actn_bbs[:,:2]/2). In other words, each predicted bounding box can be moved by up to 50% of a grid size from where its default position is. So it can be up to twice as big or half as big as its default size. So what our network predicts, are only relative translations from the center of each grid cell and the height and width (the height and with are betwenn 0 and 1, so we add 1, and multiply by the default size of the cell), and in the output stage, we then adjust the outputs taking into consideration the center of each cell and the relative translations/height - width.
+We grab the outputs, we stick them through tanh which forces it to be within [-1,1] range and multiply them by the grid size for each cell. We then grab the actual position of the anchor boxes, and we will move them around according to the value of the outputs divided by two (actn_bbs[:,:2]/2). In other words, each predicted bounding box can be moved by up to 50% of a grid size from where its default position is. So it can be up to twice as big or half as big as its default size. So what our network predicts, are only relative translations from the center of each grid cell and the height and width (the height and with are between 0 and 1, so we add 1, and multiply by the default size of the cell), we then adjust the outputs taking into consideration the center of each cell and the relative translations/height - width.
 
-#### Classification loss: binary cross entropy loss instead of cross entropy
+###  2.6. <a name='Classificationloss:binarycrossentropylossinsteadofcrossentropy'></a>Classification loss: binary cross entropy loss instead of cross entropy
 
-Binary cross entropy is what we normally use for multi-label classification. Like in the planet satellite competition, each satellite image could have multiple things. If it has multiple things in it, we cannot use softmax because softmax really encourages just one thing to have the high number. In our case, each anchor box can only have one object associated with it, so it is not for that reason that we are avoiding softmax. But due to that fact that we can an anchor box with nothing associated with it. There are two ways to handle this idea of “background”; one would be to say background is just a class, so let’s use softmax and just treat background as one of the classes that the softmax could predict. A lot of people have done it this way. But that is a really hard thing to ask neural network to do it is basically asking whether this grid cell does not have any of the 20 objects that I am interested with Jaccard overlap of more than 0.5. It is a really hard to thing to put into a single computation. On the other hand, what if we just asked for each class; “is it a motorbike?” “is it a bus?”, “ is it a person?” etc and if all the answer is no, consider that background. That is the way we do it here. It is not that we can have multiple true labels, but we can have zero [source](https://medium.com/@hiromi_suenaga/deep-learning-2-part-2-lesson-9-5f0cf9e4bb5b).
+Binary cross entropy is what we normally use for multi-label classification. Like in the planet satellite competition, each satellite image could have multiple things. If it has multiple things in it, we cannot use softmax because softmax really encourages just one thing to have the high number. In our case, each anchor box can only have one object associated with it, so it is not for that reason that we are avoiding softmax. But due to that fact that we can have anchor box with nothing associated with it. There are two ways to handle this idea of “background”; one would be to say background is just a class, so let’s use softmax and just treat background as one of the classes that the softmax could predict. A lot of people have done it this way. But that is a really hard thing to ask neural network to do it is basically asking whether this grid cell does not have any of the 20 objects that I am interested with Jaccard overlap of more than 0.5. It is a really hard thing to put into a single computation. On the other hand, what if we just asked for each class; “is it a motorbike?” “is it a bus?”, “ is it a person?” etc and if all the answer is no, consider that background. That is the way we do it here. It is not that we can have multiple true labels, but we can have zero [source](https://medium.com/@hiromi_suenaga/deep-learning-2-part-2-lesson-9-5f0cf9e4bb5b).
 
 ```python
 class BCE_Loss(nn.Module):
@@ -222,7 +251,7 @@ class BCE_Loss(nn.Module):
     def get_weight(self,x,t): return None
 ```
 
-In forward First we take the one hot embedding of the target (at this stage, we do have the idea of background), then we remove the background column (the last one) which results in a vector either of all zeros or one one, and finally we use binary cross-entropy predictions.
+In forward, first we take the one hot embedding of the target (at this stage, we do have the idea of background), then we remove the background column (the last one) which results in a vector either of all zeros or one one, and finally we use binary cross-entropy predictions.
 
 And then, after introducing the loss, we can start training, first by finding the correct learning rate using a strangled learning rates, with different learning rates for each 1/3 of the layers, and after finding the correct learning rate, we can then train our model.
 
@@ -237,7 +266,7 @@ learn.fit(lr, 1, cycle_len=5, use_clr=(20,10))
 learn.fit(lr, 1, cycle_len=5, use_clr=(20,10))
 ```
 
-#### Results
+###  2.7. <a name='Results'></a>Results
 
 <p align="center"> <img src="../figures/detection_results.png" width="500"> </p>
 
@@ -245,11 +274,11 @@ As we can see, for each cell (16 ones), we predicted bounding boxes, with a cent
 
 In practice, we want to remove the background and also add some threshold for probabilities, but it is on the right track. The potted plant image, the result is not surprising as all of our anchor boxes were small (4x4 grid). To go from here to something that is going to be more accurate, all we are going to do is to create way more anchor boxes.
 
-### Adding more anchors
+###  2.8. <a name='Addingmoreanchors'></a>Adding more anchors
 
-Until now, we've divided our input image into 4x4 cells, and for each cell the model predicts the class of the object in it, and four coordinates, x and y are beteween -1 and 1, that are then added to the center of each cell to get the position of the center of the bounding box, and the a W and H of the bounding boxes, and are between 0 and 1, that we multiply by the width of each cell, and the we get the correct coordinates for the bounding boxes.
+Until now, we've divided our input image into 4x4 cells, and for each cell the model predicts the class of the object in it, and four coordinates, x and y are between -1 and 1, that are then added to the center of each cell to get the position of the center of the bounding box, and then the W and H of the bounding boxes, and are between 0 and 1, that we multiply by the width of each cell, and the we get the correct coordinates for the bounding boxes.
 
-But the problem, is that out model is very limited in predicting the correct coordinates based only on the features, which is quite hard, so the solution is to define some anchors, that aleady have a given size the position in the image, and the model then predicts only a correction to these pre-existing anchors, like a translation and scaling.
+But the problem, is that out model is very limited in predicting the correct coordinates based only on the features, which is quite hard, so the solution is to define some anchors, that already have a given size the position in the image, and the model then predicts only a correction to these pre-existing anchors, like a translation and scaling.
 
 So, this time, let's say, we have 16 positions in the image (the centers of the old 4x4 cells), and in each one, what we can do is define 9 anchors per position, each anchors has a different ratios (3 ratios: 1:1, 0.5:1, 1:0.5) and different size (3 different sizes: 0.75, 1., 1.3), and we end up with `16 * 9 = 144` anchors or even more, in the implementation bellow we have `21*9 = 189` anchors, depending of the number of position we choose, and the number of ratios / sizes in each one:
 
@@ -258,7 +287,7 @@ So, this time, let's say, we have 16 positions in the image (the centers of the 
 And this is done as follows:
 
 ```python
-anc_grids = [4, 2, 1] # Number of Grid positions (4 + 2 + 1)
+anc_grids = [4, 2, 1] # Number of Grid positions 4² + 2² + 1²
 anc_zooms = [0.75, 1., 1.3] # The different sizes
 anc_ratios = [(1., 1.), (1., 0.5), (0.5, 1.)] # The different Ratios
 
@@ -284,9 +313,9 @@ anchors = V(np.concatenate([anc_ctrs, anc_sizes], axis=1), requires_grad=False).
 anchor_cnr = hw2corners(anchors[:,:2], anchors[:,2:])
 ```
 
-### Model
+###  2.9. <a name='Model'></a>Model
 
-In this case, we need to have a slight modification to our model, in the output of the previous model, we have 16 grids, each one of a given cell, but this time, we'll need 4x4 outputs for the anchors with positions [0.125, 0.375, 0.625, 0.875], and the same for 2x2 and 1x1, and for each one grid of these activation, the depth need to be equal to : `number of anchors x (Classes + 4)`, because in each position we have 9 anchors, and for each anchors we need to predict the 4 coordinnates (or their corrections), and the probabilities of each one of the C classes.
+In this case, we need to have a slight modification to our model, in the output of the previous model, we have 16 grids, each one of a given cell, but this time, we'll need 4x4 outputs for the anchors with positions [0.125, 0.375, 0.625, 0.875], and the same for 2x2 and 1x1, and for each one grid of these activation, the depth need to be equal to : `number of anchors x (Classes + 4)`, because in each position we have 9 anchors, and for each anchors we need to predict the 4 coordinates (or their corrections), and the probabilities of each one of the C classes.
 
 This is done by taking the 7x7x512, and constructing three outputs, one of size 4x4x(A x (C + 4)) using a conv with stride two, and a 2x2 and 1x1 output using another 2 convolutions with strides of two:
 
@@ -325,7 +354,7 @@ And as per usual, we find the learning rate, and train the model, and this time 
 
 <p align="center"> <img src="../figures/results_anchors.png" width="500"> </p>
 
-### Focal Loss :
+###  2.10. <a name='FocalLoss:'></a>Focal Loss :
 
 One problem with a big number of anchors, is the majority of them will belong to the background, and so the loss of the background will overwhelem the losses of the few anchors that do not belong to the backgound, and this will push the model to predict a background unless it is very confident that it is in fact an object of other type, if not, it won't take any chance.
 
@@ -333,10 +362,10 @@ With the focal loss, if the predictions are quite confident (say > 0.6), which i
 
 <p align="center"> <img src="../figures/focal_loss.png" width="400"> </p>
 
-And this is done as follows:
-$$\mathrm { FL } \left( p _ { \mathrm { t } } \right) = - \alpha _ { \mathrm { t } } \left( 1 - p _ { \mathrm { t } } \right) ^ { \gamma } \log \left( p _ { \mathrm { t } } \right)$$
+And this is done as follows
+<img src="https://latex.codecogs.com/gif.latex?$$\mathrm&space;{&space;FL&space;}&space;\left(&space;p&space;_&space;{&space;\mathrm&space;{&space;t&space;}&space;}&space;\right)&space;=&space;-&space;\alpha&space;_&space;{&space;\mathrm&space;{&space;t&space;}&space;}&space;\left(&space;1&space;-&space;p&space;_&space;{&space;\mathrm&space;{&space;t&space;}&space;}&space;\right)&space;^&space;{&space;\gamma&space;}&space;\log&space;\left(&space;p&space;_&space;{&space;\mathrm&space;{&space;t&space;}&space;}&space;\right)$$" title="$$\mathrm { FL } \left( p _ { \mathrm { t } } \right) = - \alpha _ { \mathrm { t } } \left( 1 - p _ { \mathrm { t } } \right) ^ { \gamma } \log \left( p _ { \mathrm { t } } \right)$$" />
 
-We have an ordinaty negative log likelihood loss, but we add a weight $\left( 1 - p _ { \mathrm { t } } \right) ^ { \gamma }$ that reduces the loss if the probabilites are close 1 (the model is confident in the predictions), and another weight alpha, that is a normal weight to reduce the inequalities in the number of examples in each class.
+We have an ordinaty negative log likelihood loss, but we add a weight <img src="https://latex.codecogs.com/gif.latex?$\left(&space;1&space;-&space;p&space;_&space;{&space;\mathrm&space;{&space;t&space;}&space;}&space;\right)&space;^&space;{&space;\gamma&space;}$" title="$\left( 1 - p _ { \mathrm { t } } \right) ^ { \gamma }$" /> that reduces the loss if the probabilites are close 1 (the model is confident in the predictions), and another weight alpha, that is a normal weight to reduce the inequalities in the number of examples in each class.
 
 And the focal loss is implemened as follows:
 
@@ -354,6 +383,6 @@ And after training with this loss, we a better resutls, and the model is capable
 
 <p align="center"> <img src="../figures/results_Fl.png" width="500"> </p>
 
-### Non Maximum Suppression
+###  2.11. <a name='NonMaximumSuppression'></a>Non Maximum Suppression
 
-And now the last step, is to reduce the number of detected object to only one for a given object in the image, this is done using Non Maximum Suppression, we go through the predicted objects, take the object with the heighes confidence score, and then supress all the other predicted object of the same class, that have an IoU > 0.5 with the one with the heighest score. this way we can end up with only one box of each ground truth object.
+And now the last step, is to reduce the number of detected objects to only one for a given object in the image, this is done using Non Maximum Suppression, we go through the predicted objects, take the object with the heighes confidence score, and then supress all the other predicted object of the same class, that have an IoU > 0.5 with the one with the heighest score. this way we can end up with only one box of each ground truth object.

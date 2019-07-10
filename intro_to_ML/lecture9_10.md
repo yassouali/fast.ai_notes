@@ -31,7 +31,7 @@ How to implement?
 * Change the loss function
 * Change the training loop to add the derivative adjustment.
 
-In the begining of the training we might see that the error in the training set is smaller with regularization than without, this might be due to the fact that the function we're optimizing is easier and smoother and can less iterations to reduce the error, but in the end with regularization the training error is larger because now we don't have any overfitting, and in the error in the validation set becomes smaller.
+In the beginning of the training we might see that the error in the training set is smaller with regularization than without, this might be due to the fact that the function we're optimizing is easier and smoother and can less iterations to reduce the error, but in the end with regularization the training error is larger because now we don't have any overfitting, and in the error in the validation set becomes smaller.
 
 ##  3. <a name='NLP'></a>NLP: Text classification
 

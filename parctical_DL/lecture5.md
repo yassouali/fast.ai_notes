@@ -1,4 +1,19 @@
-## Collaborative filtering
+<!-- vscode-markdown-toc -->
+* 1. [Collaborative filtering](#Collaborativefiltering)
+* 2. [Simple example in excel](#Simpleexampleinexcel)
+* 3. [Python version](#Pythonversion)
+* 4. [Improving the model](#Improvingthemodel)
+	* 4.1. [Neural Net Version](#NeuralNetVersion)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+# Lecture 5: Collaborative filtering
+
+##  1. <a name='Collaborativefiltering'></a>Collaborative filtering
 
 Collaborative filtering, also referred to as social filtering, filters information by using the recommendations of other people. It is based on the idea that people who agreed in their evaluation of certain items in the past are likely to agree again in the future. A person who wants to see a movie for example, might ask for recommendations from friends. The recommendations of some friends who have similar interests are trusted more than recommendations from others. This information is used in the decision on which movie to see.
 
@@ -36,21 +51,21 @@ movies.head()
 |3 | 4             | Waiting to Exhale (1995)              | Comedy\|Drama\|Romance     |
 |4 | 5             | Father of the Bride Part II (1995)    | Comedy    |
 
-### Simple example in excel
+##  2. <a name='Simpleexampleinexcel'></a>Simple example in excel
 
-We'll create a simple example for colaborative filetring in excel, first we'll begin by using a matrix factorization / decomposition instead of building a neural net, we have a matrix containing all the users (rows) and all the movies (columns), and each element of the matrix is the rating given by a certain user to the corresponding movie, if a given user did not rate the movie the element is blank.
+We'll create a simple example for collaborative filtering in excel, first we'll begin by using a matrix factorization / decomposition instead of building a neural net, we have a matrix containing all the users (rows) and all the movies (columns), and each element of the matrix is the rating given by a certain user to the corresponding movie, if a given user did not rate the movie the element is blank.
 
-And the objective is to learn two embedding matrices, one for the users (each user will characterized by a vector of size 5, that will reflect the user's perferences), and one embedding matrix for the movies, in which each movie will be represented by a vecotr of size 5 to reflec the genre and type of movie, and the objective is to use these two matrices to construct the rating matrix for each user/movies by a simple matrix multiply, and using SGD to adjust the weights of the two embedding matrices to be closer to the ground truth, we'll be able to learn good representation for each user and each movie (we predict 0 for the missing values=).
+And the objective is to learn two embedding matrices, one for the users (each user will characterized by a vector of size 5, that will reflect the user's preferences), and one embedding matrix for the movies, in which each movie will be represented by a vector of size 5 to reflect the genre and type of movie, and the objective is to use these reflect matrices to construct the rating matrix for each user/movies by a simple matrix multiply, and using SGD to adjust the weights of the two embedding matrices to be closer to the ground truth, we'll be able to learn good representation for each user and each movie (we predict 0 for the missing values=).
 
 <p align="center"> <img src="../figures/colaborative_filtering.png" width="700"> </p>
 
-* Blue cells — the actual rating
-* Purple cells — our predictions
-* Red cell — our loss function i.e. Root Mean Squared Error (RMSE)
-* Green cells — movie embeddings (randomly initialized)
-* Orange cells — user embeddings (randomly initialized)
+* Blue cells, the actual rating
+* Purple cells, our predictions
+* Red cell, our loss function i.e. Root Mean Squared Error (RMSE)
+* Green cells, movie embeddings (randomly initialized)
+* Orange cells, user embeddings (randomly initialized)
 
-### Python version
+##  3. <a name='Pythonversion'></a>Python version
 
 It is quite possible that user ID’s are not contiguous which makes it hard to use them as an index of embedding matrix. So we will start by creating indices that starts from zero and are contiguous and replace `ratings.userId` column with the index by using Panda’s apply function with an anonymous function `lambda` and do the same for `ratings.movieId`.
 
@@ -66,7 +81,7 @@ ratings.movieId = ratings.movieId.apply(lambda x: movie2idx[x])
 n_users=int(ratings.userId.nunique()) n_movies=int(ratings.movieId.nunique())
 ```
 
-And then we can create our model, by first creating two embedding matrices, each one with outputs of 50 (n_factors), so each movie/user will be represented by a 50 dimensionnal vector, and the we initialize the weights of the embeddings with uniform distribution with zero mean and 0.05 std (close to he initialization). And when we get a given movie / user pairs, we extract the correspondings vector representation for each one in the embedding matrices, and then calculate their dot products and sum it to obtain a possible rating given by the user for the movie.
+And then we can create our model, by first creating two embedding matrices, each one with outputs of 50 (n_factors), so each movie/user will be represented by a 50 dimensional vector, and then we initialize the weights of the embeddings with uniform distribution with zero mean and 0.05 std (close to K.He initialization). And when we get a given movie / user pairs, we extract the corresponding vector representation for each one in the embedding matrix, and then calculate their dot products and sum it to obtain a possible rating given by the user for the movie.
 
 ```python
 class EmbeddingDot(nn.Module):
@@ -90,7 +105,9 @@ model = EmbeddingDot(n_users, n_movies).cuda()
 opt = optim.SGD(model.parameters(), 1e-1, weight_decay=1e-5, momentum=0.9)
 ```
 
-**Improving the model**, one possible way to improve the model is to add a bias, given that some movies have higher ratings than others, we can also specigy the rage of the outputs / ratings by using a sigmoid to have the output in the range of [0,1], and then and the min rating and multiply by the range of the ratings.
+##  4. <a name='Improvingthemodel'></a>Improving the model
+
+One possible way to improve the model is to add a bias, given that some movies have higher ratings than others, we can also specify the rage of the outputs / ratings by using a sigmoid to have the output in the range of [0,1], and then and the min rating and multiply by the range of the ratings.
 
 ```python
 min_rating, max_rating = ratings.rating.min(), ratings.rating.max()
@@ -125,9 +142,9 @@ sns.jointplot(preds, y, kind='hex', stat_func=None)
 
 <p align="center"> <img src="../figures/colaborative_filtering_predict.png" width="300"> </p>
 
-### Neural Net Version
+###  4.1. <a name='NeuralNetVersion'></a>Neural Net Version
 
-One possible way to also tackle the problem of coloborative filering is to use linear layers to treat both the movie and user representation to predict a given rating, first we create two embeding matrices for the users and movies just like before, the only difference this time, is that instead of multipying them together, for given user and movies, we extract their corresponding embeddings, and we concatenate them together to form a vector of size `n_factors*2`, and feed this vector to a dropout, and then two linear layers, each one followed by a non liearity and a dropout:
+One possible way to also tackle the problem of collaborative filtering is to use linear layers to treat both the movie and user representation to predict a given rating, first we create two embedding matrices for the users and movies just like before, the only difference this time, is that instead of multiplying them together, for given user and movies, we extract their corresponding embeddings, and we concatenate them together to form a vector of size `n_factors*2`, and feed this vector to a dropout, and then two linear layers, each one followed by a non linearity and a dropout:
 
 ```python
 class EmbeddingNet(nn.Module):

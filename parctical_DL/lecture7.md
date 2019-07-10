@@ -1,4 +1,24 @@
-### Continuing With RNNs:
+<!-- vscode-markdown-toc -->
+* 1. [Continuing With RNNs:](#ContinuingWithRNNs:)
+	* 1.1. [Stateful RNN](#StatefulRNN)
+	* 1.2. [Mini batches](#Minibatches)
+	* 1.3. [Torch text](#Torchtext)
+	* 1.4. [GRU / LSTMs](#GRULSTMs)
+	* 1.5. [Testing :](#Testing:)
+* 2. [Computer Vision, CIFAR 10](#ComputerVisionCIFAR10)
+	* 2.1. [BatchNorm](#BatchNorm)
+	* 2.2. [Residuals](#Residuals)
+	* 2.3. [Class Activation Maps (CAM)](#ClassActivationMapsCAM)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+# Lecture 7: CNN architectures
+
+##  1. <a name='ContinuingWithRNNs:'></a>Continuing With RNNs:
 
 In the last lecture, the first approach we explored, we created a training set, with 8 character and the 9th one as the target, and the next example are the same as the previous, but only shifted one word to the left, so for each example, we are recalculating the states for 7/8 words that we've already seen in the last example, this is very inefficient.
 
@@ -6,9 +26,9 @@ So the solution is to take our corpus, and each time take sections with length 8
 
 <p align="center"> <img src="../figures/RNN_approaches.png" width="700"> </p>
 
-#### Stateful RNN
+###  1.1. <a name='StatefulRNN'></a>Stateful RNN
 
-In the last lecture, the way we implemented this, is that at each new section / example, we create a new hiddent state h0 (vector of zeros), and begin the predictions character by character, so for each 8 character, we'll endup needing to start over, and not reuse the computed hidden states, one possible way is to initilize the self.h in the constructor and do the calculation based on the earlier version in the forward method, but in this case, if we have thousands of character, the state of the later ones depend on the first hidden states, and so we need to packpropagate the error all the way to the start, at each time step, this is very computationnaly expensive, and the gradients are very likely to vanish or explode. so we limit the pack propagation to a fixed number of earlier states, the length is called BPTT (back-prop through time), this is implemented using `repackage_var` function:
+In the last lecture, the way we implemented this, is that at each new section / example, we create a new hidden state h0 (vector of zeros), and begin the predictions character by character, so for each 8th-character, we'll endup needing to start over, and not reuse the computed hidden states, one possible way is to initialize the self.h in the constructor and do the calculation based on the earlier version in the forward method, but in this case, if we have thousands of character, the state of the later ones depend on the first hidden states, and so we need to backpropagate the error all the way to the start, at each time step, this is very computationally expensive, and the gradients are very likely to vanish or explode. so we limit the pack propagation to a fixed number of earlier states, the length is called BPTT (back-prop through time), this is implemented using `repackage_var` function:
 
 ```python
 class CharSeqStatefulRnn(nn.Module):
@@ -33,19 +53,19 @@ class CharSeqStatefulRnn(nn.Module):
       return Variable(h.data) if type(h) == Variable else tuple(repackage_var(v) for v in h)
 ```
 
-In the code above, after finishing the calculation for a given sequence, length 8 characters in this case, we only keep the state / values of the hidden varaible, without its history (in case we have a multi layered RNN, we'll have many hidden states, for that we have the excpetion if h is not of type Varaible), in pytorch > 0.4, we only return h.data.
+In the code above, after finishing the calculation for a given sequence, which is 8 characters in this case, we only keep the state / values of the hidden variable, without its history (in case we have a multi layered RNN, we'll have many hidden states, for that we have the exception if h is not of type Variable), in pytorch > 0.4, we only return h.data.
 
-#### Mini batches
+###  1.2. <a name='Minibatches'></a>Mini batches
 
-The idea, is that instead of passing only one sequence of length BPTT to our RNN to get the outputs per time step (== BPTT) and the last hidden state, we'dd like to pass BTTP x batch size to our RNN, this is can be done by taking all the dataset, and partition it into the number of batches we'd like, say 64, so we take all of the corpus and we divide it into 64 sections, and for each training iteration, we take a sequence of length BPTT (this sequence length might vary =/- 2 tokens to add some randomness to the process, given that in NLP we can shuffle the word) from each one of the 64 sections we created, we end up with 64 sequences of length BPTT, and given that each one was taken from a different section guarantees that we won't have any intersections, the targets are also the same sequences but shifted one token to the left.
+The idea, is that instead of passing only one sequence of length BPTT to our RNN to get the outputs per time step (== BPTT) and the last hidden state, we'dd like to pass BTTP x batch size to our RNN, this is can be done by taking all the dataset, and partition it into the number of batches we'd like, say 64, so we take all of the corpus and we divide it into 64 sections, and for each training iteration, we take a sequence of length BPTT (this sequence length might vary =/- 2 tokens to add some randomness to the process, given that in NLP we cannot shuffle the word) from each one of the 64 sections we created, we end up with 64 sequences of length BPTT, and given that each one was taken from a different section guarantees that we won't have any intersections, the targets are also the same sequences but shifted one token to the left.
 
 <p align="center"> <img src="../figures/nlp_batches.png" width="700"> </p>
 
 The total number of batches is vocab_size / (batch_size x BTTP).
 
-Size of batches and BPTT: we must choose the correct values, to not get CUDA out of memory errors, and when BTTP is too high, we might also get INF loss or NAN due to the vanishing grandient.
+Size of batches and BPTT: we must choose the correct values, to not get CUDA out of memory errors, and when BTTP is too high, we might also get INF loss or NAN due to the vanishing gradient.
 
-#### Torch text
+###  1.3. <a name='Torchtext'></a>Torch text
 
 We can split our dataset into minibatches using torch text:
 
@@ -60,7 +80,7 @@ len(md.trn_dl), md.nt, len(md.trn_ds), len(md.trn_ds[0].text)
 (963, 56, 1, 493747)
 ```
 
-In TorchText, we create Fields which is a description of how to go about pre-processing the text, so we lower case all the tokens, and to create the tokens we pass a tokenizer, in our case we want to transform all the words into characters, and this is simply done using `List` in python, and using the TEXT field we create our dataset, the targets generated and flattened into one dimensionnal arrays.
+In TorchText, we create Fields which is a description of how to go about pre-processing the text, so we lower case all the tokens, and to create the tokens we pass a tokenizer, in our case we want to transform all the words into characters, and this is simply done using `List` in python, and using the TEXT field we create our dataset, the targets generated and flattened into one dimensional arrays.
 
 ```python
 
@@ -139,7 +159,7 @@ Sometimes, it is better to do a for loop explicitly and only use an RNN cell and
     def init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
 ```
 
-#### GRU / LSTMs
+###  1.4. <a name='GRULSTMs'></a>GRU / LSTMs
 
 In practice, we don't use vanilla RNN, but either LSTM (with two hidden variables this time H and C) or GRU, that control what we need to keep or forget for each time step depending on the current input and the hidden states, and then update the internal hidden state in the current time step depending on wheter we deleted some elements or not, the only thing we need to change is the type of layer we create, and if it is an LSTM add one more hidden state, and we can also add more layer with dropout between them:
 
@@ -165,7 +185,7 @@ class CharSeqStatefulLSTM(nn.Module):
                   V(torch.zeros(self.nl, bs, n_hidden)))
 ```
 
-#### Testing :
+###  1.5. <a name='Testing:'></a>Testing :
 
 ```python
 def get_next(inp):
@@ -187,7 +207,7 @@ print(get_next_n('for thos', 400))
 
 To test out trained model, we start by seeding a sequence of 8 character, and at each time we numericalize the characters, pass them through the model, and to add some variance to the output, we don't take the argmax this time, but we sample randomly given the output probabilities for the upcoming character (p[-1]).
 
-### Computer Vision, CIFAR 10
+##  2. <a name='ComputerVisionCIFAR10'></a>Computer Vision, CIFAR 10
 
 We begin by doing image classification, we create our dataloader with some data augmentation (H flip, zero badding around the edges and random crop of 32x32), we create a simple net 3 dense layers net, of sizes 32x32x32 -> 40 -> 10 classes, using `nn.ModuleList`:
 
@@ -230,7 +250,7 @@ class ConvNet(nn.Module):
 
 Given that adaptive pooling / relu, does not have any weights, it is better to add them as functions in forward function, rather than layers in the constructor
 
-#### BatchNorm
+###  2.1. <a name='BatchNorm'></a>BatchNorm
 
 When we try to add more layers we get into some trouble while training, where we can't use large learning rates, and we need to choose small learning rates and the training takes a lot of time. To fix this, we need to use batch norm layers between conv layers, to scales the activations with unit variance and zero mean, so that the changes of the upcoming layers will not effect the earlier ones.
 
@@ -262,7 +282,7 @@ With a pre-trained network, we need to be very careful about seeting the paramet
 
 We genrally add Relu after batch norm, even if in the original paper they used batch norm after the relu, but in the abalation studies done later on, people found that it is better to add the relu after the batch norm.
 
-#### Residuals
+###  2.2. <a name='Residuals'></a>Residuals
 
 In residual the outputs are : y = x + f(x), where x is prediction from the previous layer, y is prediction from the current layer. in other words, the function we're trying to learn, f(x) = y − x is called a residual. The residual is the error in terms of what we have calculated so far. What this is saying is that try to find a set of convolutional weights that attempts to fill in the amount we were off by. So in other words, we have an input, and we have a function which tries to predict the error (i.e. how much we are off by). Then we add a prediction of how much we were wrong by to the input, then add another prediction of how much we were wrong by that time, and repeat that layer after layer, zooming into the correct answer. This is based on a theory called boosting.
 
@@ -297,11 +317,11 @@ model = Resnet2([16, 32, 64, 128, 256], 10, 0.2)
 
 The full ResNet does two convolutions before it gets added back to the original input.
 
-#### Class Activation Maps (CAM)
+###  2.3. <a name='ClassActivationMapsCAM'></a>Class Activation Maps (CAM)
 
 One way to visuals how our model males some predictions, is to use CAM. what we do is to create a CNN network, where in the last layer will have C x H x W, where we have C number of channels that are equal to the number of classes, and after adaptive pooling will endup with C x 1 x 1, so each channel is reponsible for detecting one of the classes, say we have 2 x 7 x 7 for Dogs vs. Cats problem, and our model predicted cats, so we take the channel responsible for cats, and upsample it the size of the input image, and plot it, and we see a heat map, on where the model focuses to make such a prediction.
 
-<p align="center"> <img src="../figures/CAM.png" width="600"> </p>
+<p align="center"> <img src="../figures/CAM.png" width="250"> </p>
 
 To implemnet this on pytorch, we need to get the activations of the conv layers (the last one specifically), and this is done use a forward hook, “Hook” is the mechanism that lets us ask the model to return the activation. `register_forward_hook` asks PyTorch that every time it calculates a layer it runs the function given, sort of like a callback that happens every time it calculates a layer.
 

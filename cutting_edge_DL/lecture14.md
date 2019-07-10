@@ -1,22 +1,26 @@
+# Lecture 14: Super-resolution and image segmentation 
+
 <!-- TOC -->
 
-- [Super-Resolution](#super-resolution)
-    - [Model](#model)
-- [Loss](#loss)
-        - [Perceptual loss](#perceptual-loss)
-        - [Style transfer](#style-transfer)
-- [Semantic Segmentation](#semantic-segmentation)
-        - [Model](#model)
-    - [Unet](#unet)
+- [Lecture 14: Super-resolution and image segmentation](#Lecture-14-Super-resolution-and-image-segmentation)
+  - [Super-Resolution](#Super-Resolution)
+    - [Model](#Model)
+    - [Losses](#Losses)
+    - [Perceptual loss](#Perceptual-loss)
+    - [Style transfer](#Style-transfer)
+  - [Semantic Segmentation](#Semantic-Segmentation)
+      - [Model](#Model-1)
+    - [Unet](#Unet)
 
 <!-- /TOC -->
+
 ## Super-Resolution
 
 Super resolution is where we take a low resolution image (say 72x72) and upscale it to a larger image (say 288x288) trying to recreate a higher resolution image that looks as real as possible. This is a challenging thing to do because at 72x72, there’s not that much information about a lot of the details. The cool thing is that we are going to do it in a way as we tend to do with vision models which is not tied to the input size so we could then take this model and apply it to a 288 by 288 image and get something that’s four times bigger on each side so 16 times bigger than the original.
 
-One of the benefits of super-resolution, is that we don't need labeled data, we can simply create it as we like by down sampling a number of image, set them up as our inputs and then have the original sized images as our targets, we can do the same thing for a number of other tasks like deskewing, colorazition, noise-reduction, ect.
+One of the benefits of super-resolution, is that we don't need labeled data, we can simply create it as we like by down sampling a number of image, set them up as our inputs and then have the original sized images as our targets, we can do the same thing for a number of other tasks like de-skewing, colorization, noise-reduction, ect.
 
-In this lecture we're going to use imagenet as our dataset, so we're going to set our path to the correct location, and instead of using the all of image net (1M image), we're only going to use a subset of 2% (20 000 images) by creating an array of number of the size of imagenet, and only setting the indicies < 0.02 to true and use it to index the filenames and labels:
+In this lecture we're going to use imagenet as our dataset, so we're going to set our path to the correct location, and instead of using the all of image net (1M image), we're only going to use a subset of 2% (20 000 images) by creating an array of number of the size of imagenet, and only setting the indices < 0.02 to true and use it to index the filenames and labels:
 
 ```python
 from fastai.conv_learner import *
@@ -34,7 +38,7 @@ fnames = np.array(fnames_full, copy=False)[keeps]
 label_arr = np.array(label_arr_full, copy=False)[keeps]
 ```
 
-In this lecture we're going to use VGG16 network, VGG16 is beging less used these days, this generally due to the number of parameters of the network (the majority of which are in the last fully connected layers), contrary to resnet where we directly reduce the input spatial dimensions by 4 (conv 7x7 with stride 2 then a maxpool) and lose a lot of low level information that is very important for per-pixel tasks like image segmentation and super resolution, with VGG16 we reduce the spatial dimension of the image gradually, by applying by some 3x3 convolutions followed by a max pooling operation periodicaly until we get to 7x7x512 and then apply fully connected layers.
+In this lecture we're going to use VGG16 network, VGG16 is being less used these days, this generally due to the number of parameters of the network (the majority of which are in the last fully connected layers), contrary to resnet where we directly reduce the input spatial dimensions by 4 (conv 7x7 with stride 2 then a maxpool) and lose a lot of low level information that is very important for per-pixel tasks like image segmentation and super resolution, with VGG16 we reduce the spatial dimension of the image gradually, by applying by some 3x3 convolutions followed by a max pooling operation periodically until we get to 7x7x512 and then apply fully connected layers.
 
 <p align="center"> <img src="../figures/vgg16.png" width="400"> </p>
 
@@ -155,7 +159,7 @@ One alternative is to use pixel shuffle, in pixel shuffle introduced in [Real-Ti
 
 <p align="center"> <img src="../figures/pixel_shuffle.png" width="400"> </p>
 
-But the problem of artifact still presists, because from the begining each feature maps (of the r²) is initialized differently, so when we order them, in the r² pixels each one is comming from a different feature maps with a slightly different pixel values, so the same authors of the paper [Real-Time Single Image and Video Super-Resolution](https://arxiv.org/abs/1609.05158) found that the solution to this problem is to simply randomly intialize ont feature maps of the r² (more specifically the conv layer responsible of computing it), and copy the values for the other layers, this is detailed in: [checkerboard artifact free sub-pixel convolution](https://arxiv.org/abs/1707.02937).
+But the problem of artifact still presists, because from the beginning each feature maps (of the r²) is initialized differently, so when we order them, in the r² pixels each one is comming from a different feature maps with a slightly different pixel values, so the same authors of the paper [Real-Time Single Image and Video Super-Resolution](https://arxiv.org/abs/1609.05158) found that the solution to this problem is to simply randomly intialize ont feature maps of the r² (more specifically the conv layer responsible of computing it), and copy the values for the other layers, this is detailed in: [checkerboard artifact free sub-pixel convolution](https://arxiv.org/abs/1707.02937).
 
 So we now we can upsample our features to the desired scales with a series of x2 upsamling (log2(scaling) times), and then we call the function to initialise the conv layers with the correct weights to avoid any chechboard artifacts:
 
@@ -180,7 +184,7 @@ def icnr(x, scale=2, init=nn.init.kaiming_normal):
     return kernel
 ```
 
-## Loss
+### Losses
 
 The first thing we can try is to use MSE loss between the prediction and the high resolution loss, so first we find the correct learning rate, create a learner and then fit our model.
 
@@ -206,7 +210,7 @@ show_img(preds,idx,normed=False)
 
 <p align="center"> <img src="../figures/prediction_sr.png" width="400"> </p>
 
-#### Perceptual loss
+### Perceptual loss
 
 We're going to use the same approach we saw in the last lecture, and use the VGG and its intermediate layers to calculate the loss between the generated features of the low and high resolution image, so first we are going to find all the layer before a max pool which are the layers `[5, 12, 22, 32, 42]`, in super-resolution, we not interested in features that are too much scaled down, so we're only going to use `5, 12, 22`, we then going to set VGG to eval mode and set all it parametrs require grandient field to false so we won't save any gradient in the forward pass:
 
@@ -292,7 +296,7 @@ And we end up with quite the good results:
 
 <p align="center"> <img src="../figures/resullts_sr.png" width="450"> </p>
 
-#### Style transfer
+### Style transfer
 
 We can reuse the same approach with style transfer, but this time the perceptual loss will be calculated using the style and transfer losses like we did in the last lecture:
 

@@ -61,9 +61,9 @@ kaggle competitions download -c bluebook-for-bulldozers
 
 - In data sience (unlike software engineering), prototyping is very important, and jupyter notebook helps a lot, for example, given a function `display`:
 
-    1. type `display` in a cell and press shift+enter — it will tell we where it came from `<function IPython.core.display.display>`
-    2. type `?display` in a cell and press shift+enter — it will show we the documentation
-    3. type `??display` in a cell and press shift+enter — it will show we the source code. This is particularly useful for fastai library because most of the functions are easy to read and no longer than 5 lines long.
+    1. type `display` in a cell and press shift+enter, it will tell we where it came from `<function IPython.core.display.display>`
+    2. type `?display` in a cell and press shift+enter, it will show we the documentation
+    3. type `??display` in a cell and press shift+enter, it will show we the source code. This is particularly useful for fastai library because most of the functions are easy to read and no longer than 5 lines long.
 
 - `shift + tab` in Jupyter Notebook will bring up the inspection of the parameters of a function, if we hit `shift + tab` twice it'll tell us even more about the function parameters (part of the docs)
 - If we put %time, it will tell us how much times it took to execute the line in question.
@@ -122,7 +122,7 @@ for n,c in df.items():
 ```
 - Pandas then will automatically creates a list of categories (in `df.column.cat.categories`, and their decimal codes in `df.column.cat.codes`)
 
-- An additionnal pre-processing step, is processing missig values (NULL), so for each column, if there is NULL values (`pd.isnull(col).sum` > 0), we create a new column with the same name and null added in the end, and the NULL calues have 1, and the other are zeros (`pd.isnull(col)`), now for the original column, we replace the NULL values by the median of the column `df[name] = col.fillna(col.median())`. This is only done for numerical columns, pandas automaticlly handels categorical data (converted strings in our case), but the NULL in this case equals -1, so we add one to all the columns (`if not is_numerical_dtype(col)`)
+- An additional pre-processing step, is processing missig values (NULL), so for each column, if there is NULL values (`pd.isnull(col).sum` > 0), we create a new column with the same name and null added in the end, and the NULL calues have 1, and the other are zeros (`pd.isnull(col)`), now for the original column, we replace the NULL values by the median of the column `df[name] = col.fillna(col.median())`. This is only done for numerical columns, pandas automaticlly handels categorical data (converted strings in our case), but the NULL in this case equals -1, so we add one to all the columns (`if not is_numerical_dtype(col)`)
 
 **Feather format**: Reading CSV takes about 10 seconds, and processing takes another 10 seconds, so if we do not want to wait again, it is a good idea to save them. Here we will save it in a feather format where we save the preprocessed data directely to disk in exactly the same basic format that it is in RAM. This is by far the fastest way to save something, and also to read it back. Feather format is becoming standard in not only Pandas but in Java, Apache Spark, etc.
 

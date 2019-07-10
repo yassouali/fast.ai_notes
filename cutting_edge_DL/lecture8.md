@@ -1,7 +1,28 @@
+<!-- vscode-markdown-toc -->
+* 1. [Tools](#Tools)
+	* 1.1. [Pathlib](#Pathlib)
+	* 1.2. [Tricks to using IDEs](#TrickstousingIDEs)
+	* 1.3. [Matplotlib](#Matplotlib)
+	* 1.4. [Python debugger](#Pythondebugger)
+* 2. [Object Detection](#ObjectDetection)
+	* 2.1. [Load the data / annotations](#Loadthedataannotations)
+	* 2.2. [Polting](#Polting)
+* 3. [Image classification](#Imageclassification)
+	* 3.1. [The data](#Thedata)
+	* 3.2. [The model](#Themodel)
+* 4. [Object localization](#Objectlocalization)
+	* 4.1. [Boxes only](#Boxesonly)
 
-## Tools
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+# Lecture 8: Object Detection
 
-### Pathlib
+##  1. <a name='Tools'></a>Tools
+
+###  1.1. <a name='Pathlib'></a>Pathlib
 
 - [Cheat Sheet](https://pbpython.com/pathlib-intro.html)
 
@@ -30,7 +51,7 @@ path.exists() # False
 new_path.exists() # True
 ```
 
-Our file was renamed in a few easy steps, in a nice object oriented fashion. The paths returned by json areof type PosixPath, PosixPath represents our path instance, which enables us to do all sorts of operations, like creating a new directory, checking for existence, checking for file type, getting size, checking for user, group, permissions, etc. Basically everything we would previously do with the os.path module. Like fetching a certain type of files with `glob`:
+Our file was renamed in a few easy steps, in a nice object oriented fashion. The paths returned by json are of type PosixPath, PosixPath represents our path instance, which enables us to do all sorts of operations, like creating a new directory, checking for existence, checking for file type, getting size, checking for user, group, permissions, etc. Basically everything we would previously do with the os.path module. Like fetching a certain type of files with `glob`:
 
 ```python
 from pathlib import Path
@@ -50,12 +71,11 @@ new_path.mkdir(parents=True)
 new_path.exists() # True
 ```
 
-### Tricks to using IDEs
+###  1.2. <a name='TrickstousingIDEs'></a>Tricks to using IDEs
 
 Some VScode tricks and shortcuts:
 
 * Command palette (`Ctrl-shift-p`)
-   * Select interpreter
 * Go to symbol (`Ctrl-t`)
 * Find references (`Shift-F12`)
 * Go to definition (`F12`)
@@ -63,7 +83,8 @@ Some VScode tricks and shortcuts:
 * Hide sidebar (`Ctrl-b`)
 * Zen mode (`Ctrl-k,z`)
 
-### Matplotlib
+###  1.3. <a name='Matplotlib'></a>Matplotlib
+
 One important big-picture matplotlib concept is its object hierarchy. `plt.plot([1, 2, 3])` hides the fact that a plot is really a hierarchy of nested Python objects. A “hierarchy” here means that there is a tree-like structure of matplotlib objects underlying each plot.
 
 A Figure object is the outermost container for a matplotlib graphic, which can contain multiple Axes objects. One source of confusion is the name: an Axes actually translates into what we think of as an individual plot or graph (rather than the plural of “axis,” as we might expect).
@@ -74,7 +95,7 @@ We can think of the Figure object as a box-like container holding one or more Ax
 
 [More info](https://forums.fast.ai/t/deeplearning-lec8-notes/13684)
 
-### Python debugger
+###  1.4. <a name='Pythondebugger'></a>Python debugger
 
 We can use the python debugger pdb to step through code, to do this we have to choices:
 
@@ -85,13 +106,13 @@ Useful Commands:
 
 * h (help)
 * s (step into)
-* n (next line / step over — we can also hit enter)
+* n (next line / step over, we can also hit enter)
 * c (continue to the next breakpoint)
 * u (up the call stack)
 * d (down the call stack)
-* p (print) — force print when there is a single letter variable that’s also a command.
-* l (list) — show the line above and below it
-* q (quit) — very important
+* p (print), force print when there is a single letter variable that’s also a command.
+* l (list), show the line above and below it
+* q (quit), very important
 
 Documentation:
 
@@ -112,9 +133,9 @@ exec  pdb
 ```
 
 
-## Object Detection
+##  2. <a name='ObjectDetection'></a>Object Detection
 
-The goal of object detection is to classify multiple things, and find the bounding boxes around the objects which we're classifying, the object has to be entirelt within the bounding box, but not bigger then it needs to be.
+The goal of object detection is to classify multiple things, and find the bounding boxes around the objects which we're classifying, the object has to be entirely within the bounding box, but not bigger then it needs to be.
 
 We'll tackle this problem in three stages:
 
@@ -124,7 +145,7 @@ We'll tackle this problem in three stages:
 
 <p align="center"> <img src="../figures/obj_detection.png" width="450"> </p>
 
-### Load the data / annotations
+###  2.1. <a name='Loadthedataannotations'></a>Load the data / annotations
 
 We'll use Pascal Voc 2007 ([Download link](http://pjreddie.com/media/files/VOCtrainval_06-Nov-2007.tar) with json annotation, a more simpler version than the original xml ones), which is a dataset that provides the annotations (bounding boxes) of the objects present in the image, there is another version (2012), containing more images, but it this lecture we're only going to use the smaller one, we could combine them, but we need to be careful to not have any data leakage between the two validation sets if we do this.
 
@@ -137,7 +158,7 @@ trn_j = json.load((PATH/'pascal_train2007.json').open())
 trn_j.keys() # ['images', 'type', 'annotations', 'categories']
 ```
 
-The images field contains all the infomation about the images in the dataset, their name, the height and width and their IDs. fot the annotations, here we have the bounding box annotations, the category ID of the object enclosed in the box, the segmentation, the box (xmin, ymin, xmax, ymax). and the categories
+The images field contains all the infomation about the images in the dataset, their name, the height and width and their IDs. for the annotations, here we have the bounding box annotations, the category ID of the object enclosed in the box, the segmentation and the box (xmin, ymin, xmax, ymax).
 
 IMAGES,ANNOTATIONS,CATEGORIES = ['images', 'annotations', 'categories']
 
@@ -158,7 +179,7 @@ trn_j[ANNOTATIONS][0]
   'segmentation': [[155, 96, 155, 270, 351, 270, 351, 96]]}
 ```
 
-It’s helpful to use constants instead of strings, since we get tab-completion and don’t mistype. so then we can create dits to convert from IDs to class names, the same thing for image IDs and their names, and we also create a list containing all of the image IDs in the training set.
+It’s helpful to use constants instead of strings, since we get tab-completion and don’t mistype. so then we can create dicts to convert from IDs to class names, the same thing for image IDs and their names, and we also create a list containing all of the image IDs in the training set.
 
 ```python
 FILE_NAME, ID, IMG_ID, CAT_ID, BBOX = 'file_name', 'id', 'image_id', 'category_id', 'bbox'
@@ -175,7 +196,7 @@ JPEGS = 'VOCdevkit/VOC2007/JPEGImages'
 IMG_PATH = PATH/JPEGS
 ```
 
-To simplify the process of using the annotations, we create a dictionnary, where the keys are image IDs and the the values are a list of all the bounding boxes in the image, in such cases, a `defaultdict` is useful any time we want to have a default dictionary entry for new keys, so in case we want to access a new key, if it is not in the dict it'll be created, depending on the type we desire, in this case we'd like lists to be created.
+To simplify the process of using the annotations, we create a dictionary, where the keys are image IDs and the the values are a list of all the bounding boxes in the image, in such cases, a `defaultdict` is useful any time we want to have a default dictionary entry for new keys, so in case we want to access a new key, if it is not in the dict it'll be created, depending on the type we desire, in this case we'd like lists to be created.
 
 ```python
 trn_anno = collections.defaultdict(lambda:[])
@@ -192,7 +213,7 @@ Here we switched between x and y, in the original annotation, we have (xmin, ymi
 def bb_hw(a): return np.array([a[1],a[0],a[3]-a[1],a[2]-a[0]])
 ```
 
-#### Polting
+###  2.2. <a name='Polting'></a>Polting
 
 Matplotlib’s `plt.subplots` is a useful wrapper for creating plots, regardless of whether we have more than one subplot. Here is a simple function used to create an axis with a subplot, that we'll pass to other function to add / draw some new elements in the plot.
 
@@ -205,7 +226,7 @@ def show_img(im, figsize=None, ax=None):
    return ax
 ```
 
-A simple but rarely used trick to making text visible regardless of background is to use white text with black outline, or visa versa. Here’s how to do it in matplotlib.
+A simple but rarely used trick to making text visible regardless of background is to use white text with black outline, or vice versa. Here’s how to do it in matplotlib.
 
 ```python
 def draw_outline(o, lw):
@@ -226,7 +247,7 @@ def draw_text(ax, xy, txt, sz=14):
     draw_outline(text, 1)
 ```
 
-And now we can reuse the created function above to show multiple objects on a single image by simply ploting the image and iterating over the bounding boxes and one by one.
+And now we can reuse the created function above to show multiple objects on a single image by simply plotting the image and iterating over the bounding boxes one by one.
 
 ```python
 def draw_im(im, ann):
@@ -249,11 +270,11 @@ def draw_idx(i):
 
 <p align="center"> <img src="../figures/ploting_example.png" width="400"> </p>
 
-### Image classification
+##  3. <a name='Imageclassification'></a>Image classification
 
-#### The data
+###  3.1. <a name='Thedata'></a>The data
 
-The first and easiest step is to begin with a simple image classification task, by predicting the classes of the largest objecet in the image, so we need to start by creating the labels of the images in the dataset using the areas of each bounding box, for this we can use a simple lambda function, and call it in the appropriate function that returns the largest box, and then call the function in a dictionnary comprehension to associate with each image / image ID the largest box, and each box is a tuple with its four coordinates and the associated class (or its category id to be precise).
+The first and easiest step is to start with a simple image classification task, by predicting the classes of the largest object in the image, so we need to start by creating the labels of the images in the dataset using the areas of each bounding box, for this we can use a simple lambda function, and call it in the appropriate function that returns the largest box, and then call the function in a dictionary comprehension to associate with each image / image ID the largest box, and each box is a tuple with its four coordinates and the associated class (or its category id to be precise).
 
 ```python
 sorted(b, key=lambda x: np.product(x[0][-2:]-x[0][:2]), reverse=True)
@@ -266,7 +287,7 @@ def get_lrg(b):
 trn_lrg_anno = {a: get_lrg(b) for a,b in trn_anno.items()}
 ```
 
-To avoid the need to apply these steps each time we want to use the dataset, we stor the image img id and the corresponding largest box in a Pandas data frame, we also specify the columns to force the correct ordering of them.
+To avoid the need to apply these steps each time we want to use the dataset, we store the image indexed by `img_id` and the corresponding largest box in a Pandas data frame, we also specify the columns to force the correct ordering of them.
 
 ```python
 (PATH/'tmp').mkdir(exist_ok=True)
@@ -276,9 +297,9 @@ df = pd.DataFrame({'fn': [trn_fns[o] for o in trn_ids],
 df.to_csv(CSV, index=False)
 ```
 
-#### The model
+###  3.2. <a name='Themodel'></a>The model
 
-First we'll resize all the image to a fixed size, and without any croping, only rescaling the image to the right size given that the largest object may not be centred in the image unlike the instances in imagenet per example, and we then choose the model (a simple resnet 34) and create a data loader of the dataset, a data loader is an iterator that will provide a mini-batch of data at each training iteration. But first we need to ensure that we start at the beginning of the dataset. Pythons’ iter() method will create an iterator object and start at the beginning of the dataset. And afterwards our iterator will have __next__ that can be used to pull a mini-batch, the element returned by the dataloader are in the GPU, and are in the form of torch tensors, and are normelized between 0 and 1.
+First we'll resize all the image to a fixed size, and without any cropping, only rescaling the image to the right size given that the largest object may not be centred in the image unlike the instances in imagenet per example, and we then choose the model (a simple resnet 34) and create a data loader of the dataset, a data loader is an iterator that will provide a mini-batch of data at each training iteration. But first we need to ensure that we start at the beginning of the dataset. Pythons’ iter() method will create an iterator object and start at the beginning of the dataset. And afterwards our iterator will have `__next__` that can be used to pull a mini-batch, the element returned by the dataloader are in the GPU, and are in the form of torch tensors, and are nomalized between 0 and 1.
 
 ```python
 f_model = resnet34
@@ -309,15 +330,13 @@ The results are quite good:
 
 <p align="center"> <img src="../figures/classification.png" width="600"> </p>
 
-### Object localization
+##  4. <a name='Objectlocalization'></a>Object localization
 
-Now instead of only predecting the label of the largest object, we're also going to predict the 4 coordinates of the box of the object in question. To predict the bounding box, we'll need a new output branch of the model, this branch will be a regression branch outputing real values corresponding to image coordinates, and the loss function will be a MSE or a L1 lossn to not overblow the loss when the error is large, and for the classification we have the same classification output with a softmax output and a cross entropy loss.
+Now instead of only predecting the label of the largest object, we're also going to predict the 4 coordinates of the box of the object in question. To predict the bounding box, we'll need a new output branch of the model, this branch will be a regression branch outputing real values corresponding to image coordinates, and the loss function will be a MSE or a L1 loss to not overblow the loss when the error is large, and for the classification we have the same classification output with a softmax output and a cross entropy loss.
 
-#### Boxes only
+**Boxes only**: First we only going to have a regression output, given that the original resnet output a classification with a vector of 1000 for the probabilities of all the classes in the imagenet dataset, or a 21 classes in our case of PASCAL VOC, we're going to have a model with only four output, so we're going to have a conv layer going from 7x7x512 to 1x1x4 instead of an average pool folowed by a linear layer, and we can also flatten the 7x7x512 == 25088 and then add a linear layer of 25088 -> 4.
 
-First we only going to have a regression output, given that the original resnet output a classification with a vector of 1000 for the probabilities of all the classes in the imagenet dataset, or a 21 classes in our case of PASCAL VOC, we're going to have a model with only four output, so we're going to have a conv layer going from 7x7x512 to 1x1x4 instead of an average pool folowed by a linear layer, and we can also flatten the 7x7x512 == 25088 and then add a linear layer of 25088 -> 4.
-
-For the dataset, we creat a new datafama, and this time with two fieald image filenames and their bounding boxes:
+For the dataset, we creat a new datafama, and this time with two fields are the image filenames and their bounding boxes:
 
 ```python
 bb = np.array([trn_lrg_anno[o][0] for o in trn_ids])
@@ -327,7 +346,7 @@ df = pd.DataFrame({'fn': [trn_fns[o] for o in trn_ids], 'bbox': bbs}, columns=['
 df.to_csv(BB_CSV, index=False)
 ```
 
-Adding a custom head to the resnet 34, and then per the usual, find the leanring rate, and train the head, gradually unfreeze the layers and train them with differential leanring rates:
+Adding a custom head to the resnet 34, and then per the usual, find the LR rate, and train the head, gradually unfreeze the layers and train them with differential learning rates:
 
 ```python
 head_reg4 = nn.Sequential(Flatten(), nn.Linear(25088,4))
@@ -344,6 +363,6 @@ learn.fit(lrs, 1, cycle_len=2)
 learn.freeze_to(-3)
 ```
 
-And then results are somehow correct, when there is only one object the network predicts a correct bounding box, but when there is multipple object the model does not knowq which one to choose the chooses the middle, or when the object is small and not the obvious:
+And then results are somehow correct, when there is only one object the network predicts a correct bounding box, but when there is multipple object the model does not know which one to choose so it the chooses the middle, or when the object is small and not the obvious:
 
 <p align="center"> <img src="../figures/obj_localization.png" width="600"> </p>

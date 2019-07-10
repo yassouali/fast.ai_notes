@@ -1,4 +1,24 @@
-### How to download data
+<!-- vscode-markdown-toc -->
+- [Lecture 3: Overfitting](#Lecture-3-Overfitting)
+  - [1. <a name='Kaggle'></a>Kaggle](#1-a-nameKaggleaKaggle)
+    - [1.1. <a name='Howtodownloaddata'></a>How to download data](#11-a-nameHowtodownloaddataaHow-to-download-data)
+    - [1.2. <a name='CreateSubmissionfileforKaggle'></a>Create Submission file for Kaggle](#12-a-nameCreateSubmissionfileforKaggleaCreate-Submission-file-for-Kaggle)
+  - [2. <a name='Softmaxloss'></a>Softmax loss](#2-a-nameSoftmaxlossaSoftmax-loss)
+  - [3. <a name='Multilabelclassification'></a>Multilabel classification](#3-a-nameMultilabelclassificationaMultilabel-classification)
+  - [4. <a name='Differenceinlogbaseforcrossentropycalcuation'></a>Difference in log base for cross entropy calcuation](#4-a-nameDifferenceinlogbaseforcrossentropycalcuationaDifference-in-log-base-for-cross-entropy-calcuation)
+  - [5. <a name='Structuredandunstructureddata'></a>Structured and unstructured data](#5-a-nameStructuredandunstructureddataaStructured-and-unstructured-data)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+# Lecture 3: Overfitting
+
+##  1. <a name='Kaggle'></a>Kaggle
+
+###  1.1. <a name='Howtodownloaddata'></a>How to download data
 
 Kaggle CLI is a good tool to use when we are downloading from Kaggle. After installing Kaggle-CLI, we can download the datasets directly from the terminal.
 ```
@@ -6,7 +26,7 @@ kg download -u <username> -p <password> -c <competition>
 ```
 A quite interesting addon is `CurlWget`, which gives us a curl command we can past to the terminal the use directly.
 
-#### Create Submission file for Kaggle
+###  1.2. <a name='CreateSubmissionfileforKaggle'></a>Create Submission file for Kaggle
 Let's take for example the dog vs cats kaggle competition, we first run our model on the test set and obtain by default the log probabilities using the fastai library, so we exponentiate them to get back the probabilities:
 ```python
 log_preds,y = learn.TTA(is_test=True)
@@ -18,7 +38,7 @@ And we create a dataframe to store them, and write them to disk using the correc
 df = pd.DataFrame(probs)
 df.columns = data.classes
 ```
-One additionnal column we need to add, that is required by kaggle, is the ID of the images / examples in the test set. So we insert a new column at position zero named ‘id’ and remove first 5 and last 4 letters since we just need ids in this case.
+One additional column we need to add, that is required by kaggle, is the ID of the images / examples in the test set. So we insert a new column at position zero named ‘id’ and remove first 5 and last 4 letters since we just need ids in this case.
 
 ```python
 df.insert(0,'id', [o[5:-4] for o in data.test_ds.fnames])
@@ -47,7 +67,7 @@ If we're working in a distant server, we can use `FileLink` to back a URL that w
 FileLink(f'{SUBM}subm.gz')
 ```
 
-#### Softmax loss
+##  2. <a name='Softmaxloss'></a>Softmax loss
 
 In a classification task, the goal is to learn a mapping h:X→Y, for either a:
 
@@ -55,9 +75,11 @@ In a classification task, the goal is to learn a mapping h:X→Y, for either a:
 
 * Single-label vs multilabel: This refers to how many possible outcomes are possible for a single example x∈X. This refers to whether the chosen categories are mutually exclusive, or not. For example, if we are trying to predict the color of an object, then we're probably doing single label classification: a red object can not be a black object at the same time. On the other hand, if we're doing object detection in an image, then since one image can contain multiple objects in it, we're doing multi-label classification.
 
-Softmax is used only for multi-class cases, in which the inputs is one of M classes, for multilabel classification, where each output might belong to multiple classes, we can use sigmoid unit in the output, giving us and output of size batch_size x number_classes, just like softmax, the only difference is that time the ouputs are not normlized, but each element is between [0,1], so then use a simple binary cross with the labels. but we also can train a multilabel classifier with tanh & hinge, by just treating the targets to be in {-1,1}. Or even sigmoid & focal loss with {0, 1} with problems with 1:1000 training imbalance, when we want to reduce the effect of the frequent class and increase the loss of the unfrequent ones:
+##  3. <a name='Multilabelclassification'></a>Multilabel classification
 
-$$F L \left( p _ { t } \right) = - \left( 1 - p _ { t } \right) ^ { \gamma } \log \left( p _ { t } \right)$$
+Softmax is used only for multi-class cases, in which the inputs is one of M classes, for multilabel classification, where each output might belong to multiple classes, we can use sigmoid unit in the output, giving us and output of size `batch_size x number_classes`, just like softmax, the only difference is that time the ouputs are not normlized, but each element is between [0,1], so then use a simple binary cross with the labels. but we also can train a multilabel classifier with tanh & hinge, by just treating the targets to be in {-1,1}. Or even sigmoid & focal loss with {0, 1} with problems with 1:1000 training imbalance, when we want to reduce the effect of the frequent class and increase the loss of the unfrequent ones:
+
+<img src="https://latex.codecogs.com/gif.latex?$$F&space;L&space;\left(&space;p&space;_&space;{&space;t&space;}&space;\right)&space;=&space;-&space;\left(&space;1&space;-&space;p&space;_&space;{&space;t&space;}&space;\right)&space;^&space;{&space;\gamma&space;}&space;\log&space;\left(&space;p&space;_&space;{&space;t&space;}&space;\right)$$" title="$$F L \left( p _ { t } \right) = - \left( 1 - p _ { t } \right) ^ { \gamma } \log \left( p _ { t } \right)$$" />
 
 Here we added a new term: (1- pt)^γ, the log loss is calculated using binary cross entropy, and then the resuls are multiplied by this term, setting γ > 0 reduces the relative loss for well-classified examples (pt > 0.5), putting more focus on hard, misclassified examples. they also add a wight alpha.
 
@@ -76,7 +98,7 @@ def Focal_Loss(y_true, y_pred, alpha=0.25, gamma=2):
    return reduce_fl
 ```
 
-#### Difference in log base for cross entropy calcuation
+##  4. <a name='Differenceinlogbaseforcrossentropycalcuation'></a>Difference in log base for cross entropy calcuation
 
 Log base e and log base 2 are only a constant factor off from each other :
 
@@ -84,7 +106,7 @@ $$\log_{n}X = \frac{\log_{e} X} {\log_{e} n}$$
 
 Therefore using one over the other scales the entropy by a constant factor. When using log base 2, the unit of entropy is bits, where as with natural log, the unit is nats.  One isn't better than the other. It's kind of like the difference between using km/hour and m/s.  It is possible that log base 2 is faster to compute than the logarithm. However, in practice, computing cross-entropy is pretty much never the most costly part of the algorithm, so it's not something to be overly concerned with. In practice the logarithm used is the natural logarithm (base e).
 
-#### Structured and unstructured data
+##  5. <a name='Structuredandunstructureddata'></a>Structured and unstructured data
 
 Structured data is data that can be both syntactically and semantically described by a straightforward format description. Data in CSV files, XML files, JSON files, email headers, and to some extent HTML is structured, because once we have the format specifier for a particular file, we can easily identify specific values in the data and what they mean semantically. A whole lot of business-gathered data is in lists, tables, or other structured formats.
 

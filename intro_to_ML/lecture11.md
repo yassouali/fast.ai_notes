@@ -76,7 +76,7 @@ class DotProdNB(nn.Module):
         return F.softmax(x)
 ```
 
-In pytorch, instead of using a very large matrix (25000 x 800000) of binary values, and then multiply it by the weights / ratios; we can only store the none negative values of the matrice (a sparce matrix) as indices, and use a look-up table, which takes these indices and gives and ouputs the weights for w and the ratios for r, and this lookup table in pytorch in `nn.Embedding`. In general,  `nn.Embedding` is a lookup table where the key is the word index and the value is the corresponding word vector. However, before using it we should specify the size of the lookup table, and initialize the word vectors ourselves. Here is an exmaple:
+In pytorch, instead of using a very large matrix (25000 x 800000) of binary values, and then multiply it by the weights / ratios; we can only store the none negative values of the matrix (a sparce matrix) as indices, and use a look-up table, which takes these indices and gives and ouputs the weights for w and the ratios for r, and this lookup table in pytorch in `nn.Embedding`. In general,  `nn.Embedding` is a lookup table where the key is the word index and the value is the corresponding word vector. However, before using it we should specify the size of the lookup table, and initialize the word vectors ourselves. Here is an exmaple:
 
 ```python
 # vocab_size is the number of words in the train, val and test set

@@ -1,4 +1,23 @@
-### Leaning rate tricks / schedulers
+
+# Lecture 13: Style Transfer
+
+<!-- vscode-markdown-toc -->
+- [Lecture 13: Style Transfer](#Lecture-13-Style-Transfer)
+  - [1. <a name='Leaningratetricksschedulers'></a>Leaning rate tricks / schedulers](#1-a-nameLeaningratetricksschedulersaLeaning-rate-tricks--schedulers)
+  - [2. <a name='Inception'></a>Inception](#2-a-nameInceptionaInception)
+  - [3. <a name='Styletransfer'></a>Style transfer](#3-a-nameStyletransferaStyle-transfer)
+    - [3.1. <a name='Contentloss'></a>Content loss](#31-a-nameContentlossaContent-loss)
+    - [3.2. <a name='Forwardhooks'></a>Forward hooks](#32-a-nameForwardhooksaForward-hooks)
+    - [3.3. <a name='Styleloss'></a>Style loss](#33-a-nameStylelossaStyle-loss)
+    - [3.4. <a name='Styletransfer-1'></a>Style transfer](#34-a-nameStyletransfer-1aStyle-transfer)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+##  1. <a name='Leaningratetricksschedulers'></a>Leaning rate tricks / schedulers
 
 There is a lot of possible learning rates to use / test when expermenting, this type of adjustable learning rates are implemented in the fastai API using training phases, let's go through some of them:
 
@@ -48,16 +67,17 @@ And one possibility is instead of decay to the lower learning rate, we can decay
 
 <p align="center"> <img src="../figures/one_cycle_lr.png" width="400"> </p>
 
-### Inception:
+##  2. <a name='Inception'></a>Inception
+
 Inception network is quite similar to resnet, we also pass the incoming features into a given layer directely to the next layer, and also elevate it by transforming the input thorugh some convolutions, in resnet we add to the input its convolved version, in inception we concatenate a convolved version of the input to it.
 
 <p align="center"> <img src="../figures/inception.png" width="300"> </p>
 
-We see here that we have two additionnal branches, the first one with only 1x1 convolutions, used to compress the input along its channels dimensions, and for the second additionnal branch we first use a 1x1 conv to reduce the upcoming computations, and the interesting things is the usage of two symetric filters, so to capture a wide amount of spatial information, we need to use bigger filters like 5x5 or 7x7, but these types of filters are very computationnaly heavy, for 7x7 filters we have 49 x number of input pixels x number of input channles, and in the last layer we have a large number of channles and we'll endup with a large number of computations, this is way we rarely use kernels larger than 3x3 and if so, only at the begining like resenet, one solution is to aproximate the 7x7 kernel using two 7x1 and 1x7 filters, and representation learned by these two filters will certainly not be able to capture all of that of 7x7 filters, but will be very close to it and even help out model avoid overfitting and reduce the number of computations.
+We see here that we have two additional branches, the first one with only 1x1 convolutions, used to compress the input along its channels dimensions, and for the second additional branch we first use a 1x1 conv to reduce the upcoming computations, and the interesting things is the usage of two symetric filters, so to capture a wide amount of spatial information, we need to use bigger filters like 5x5 or 7x7, but these types of filters are very computationally heavy, for 7x7 filters we have 49 x number of input pixels x number of input channels, and in the last layer we have a large number of channels and we'll endup with a large number of computations, this is way we rarely use kernels larger than 3x3 and if so, only at the beginning like resenet, one solution is to approximate the 7x7 kernel using two 7x1 and 1x7 filters, and representation learned by these two filters will certainly not be able to capture all of that of 7x7 filters, but will be very close to it and even help out model avoid overfitting and reduce the number of computations.
 
-An other important trick to use during traninig is progressing resizing of the image, this is detailed in [Progressive Growing of GANs](https://research.nvidia.com/publication/2017-10_Progressive-Growing-of)
+An other important trick to use during training is progressing resizing of the image, this is detailed in [Progressive Growing of GANs](https://research.nvidia.com/publication/2017-10_Progressive-Growing-of)
 
-## Style transfer
+##  3. <a name='Styletransfer'></a>Style transfer
 
 The goal is to take two pictures and generate a new picture with the style of one picture and the content of the other one, this is done through a loss function that will be lower if the generated image style and content are the ones we want, after we have our function we can start from a noise image, with the style and content image to calculate the loss and backpropagate the error and this time instead of changing the weights of the network we change the values of the pixels to get the correct image.
 
@@ -69,7 +89,7 @@ The loss will contain two terms, the content loss and the style loss with a hype
 
 For the content loss one is to compare the pixels of the content picture and update its pixels until (MSE loss) the noise image will be very similar / identical to the content image, but that's not our objective, we don't want to generate an image that is identical to the content image, but a one that similar in its content in a general manner, for this we'll use a CNN, a VGG network to be more specific, and rather than comparing pixels for the two images, we can compare the intermediate activations in the VGG network (say conv5), and given that these layer will contain a higher level of semantic entites that are translation invariant, we'll end up comparing the high level representations instead of the extact values of the pixels, called **perceptual loss**
 
-### Content loss
+###  3.1. <a name='Contentloss'></a>Content loss
 
 We'll use imagenet samples, but given how big imagenet is we'll only take a small sample from it (can be found [here](http://files.fast.ai/data/)), we'll create the path to the imagenet sample, and load VGG net and freeze it given that we'll only use its representation to calculate the loss and not for predictions:
 
@@ -157,7 +177,7 @@ plt.imshow(x)
 
 <p align="center"> <img src="../figures/content.png" width="300"> </p>
 
-#### Forward hook
+###  3.2. <a name='Forwardhooks'></a>Forward hooks
 
 Until now, we only tried one layer from which the activations will be extracted, and if we want to test different layers we need to create different networks contrainng the VGG network up to the given layer, which is not very efficient, as an alternative we can use `register_forward_hook`, that, given a module, will automatically store a the activation when the forward function of that module s called, to imlement it, we create a class SaveFeature, that will have a hook, this hook is a function that will be called each time `m.forward` is executed, and it will get the as argument the module in question, its inputs, and its outputs, and we're going to store its activation in a features variable to use for the loss calculations.$
 
@@ -212,7 +232,7 @@ And we see that we optain better resutls:
 
 <p align="center"> <img src="../figures/content_2.png" width="300"> </p>
 
-### Style loss
+###  3.3. <a name='Styleloss'></a>Style loss
 
 The objective of the style function is to detect the reoccuring styles/textures in the image without having a relation to its content, and one way to obtain this is to get the correlation between different feature maps in the same layer, so to calculate the style loss, we choose a number of layers, and for each one we will calculate the dot product between each features map in that layer (n² dot products), sum them and normalize them, and this is called the gramm matrix, now if we take each feature map of a given layer l of size (H x W) and flatten it into one vector, then to calculate the gram matrix we need to multiply each vector by all the other vectors, so n² dot product to get the gram matric for one layer, and the gram matrix for layer l between only two feature maps (i and j) is simply the formula of the two product between two vectors:
 
@@ -290,7 +310,7 @@ We can see that we've got good resutls, but we can do better if we weight the lo
 
 <p align="center"> <img src="../figures/style_reconstruction.png" width="500"> </p>
 
-### Style transfer
+###  3.4. <a name='Styletransfer-1'></a>Style transfer
 
 And now all we need to do is in the loss calculation function, add the two losses, the style and the content loss with a weighting factor (here we don't), we get the optimize and call its step function:
 

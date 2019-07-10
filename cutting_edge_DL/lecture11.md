@@ -441,7 +441,7 @@ class Seq2SeqRNN_TeacherForcing(nn.Module):
         # .........
 ```
 
-And with this additionnal trick, we get better results in a shorter time.
+And with this additional trick, we get better results in a shorter time.
 
 #### Attention Mecanism
 

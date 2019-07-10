@@ -1,9 +1,35 @@
+<!-- vscode-markdown-toc -->
+- [Lecture 6: RNNs](#Lecture-6-RNNs)
+  - [1. <a name='Collaborativefiltering'></a>Collaborative filtering](#1-a-nameCollaborativefilteringaCollaborative-filtering)
+    - [1.1. <a name='Codesnippets'></a>Code snippets](#11-a-nameCodesnippetsaCode-snippets)
+    - [1.2. <a name='Adeeperlook'></a>A deeper look](#12-a-nameAdeeperlookaA-deeper-look)
+      - [1.2.1. <a name='Biases'></a>Biases](#121-a-nameBiasesaBiases)
+      - [1.2.2. <a name='EmbeddingInterpretation'></a>Embedding Interpretation](#122-a-nameEmbeddingInterpretationaEmbedding-Interpretation)
+      - [1.2.3. <a name='Reusingtheembeddings'></a>Reusing the embeddings](#123-a-nameReusingtheembeddingsaReusing-the-embeddings)
+  - [2. <a name='SGD'></a>SGD](#2-a-nameSGDaSGD)
+  - [3. <a name='RecurrentNeuralNetwork'></a>Recurrent Neural Network](#3-a-nameRecurrentNeuralNetworkaRecurrent-Neural-Network)
+    - [3.1. <a name='RNNsasLinearlayers'></a>RNNs as Linear layers](#31-a-nameRNNsasLinearlayersaRNNs-as-Linear-layers)
+      - [3.1.1. <a name='Themodel'></a>The model](#311-a-nameThemodelaThe-model)
+    - [3.2. <a name='OurfirstRNN:'></a>Our first RNN:](#32-a-nameOurfirstRNNaOur-first-RNN)
+    - [3.3. <a name='RNNwithPyTorch'></a>RNN with PyTorch](#33-a-nameRNNwithPyTorchaRNN-with-PyTorch)
+      - [3.3.1. <a name='Testthemodel'></a>Test the model](#331-a-nameTestthemodelaTest-the-model)
+    - [3.4. <a name='Multi-output'></a>Multi-output](#34-a-nameMulti-outputaMulti-output)
+      - [3.4.1. <a name='GradientExplosion'></a>Gradient Explosion](#341-a-nameGradientExplosionaGradient-Explosion)
+    - [3.5. <a name='References'></a>References](#35-a-nameReferencesaReferences)
 
-## Collaborative filtering
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
 
-In the last lecture, we created a simple model for colloborative filtering, first by taking as inputs the one hot encodings of the 9066 movies (in reality only the indices are passed to the lookup table `nn.Embedding`) and the 671 users, and then using the two 50-dimensionnal embeddings to create the score matix, we also add a biad (using `nn.Embedding`) and a sigmoid x the range of the scores, the second approch is to use hidden layers, first the two embeddings are concatenated and then passed to two linear layers and outputing the score for a potential movie / user pair.
+# Lecture 6: RNNs
 
-### Code snippets
+##  1. <a name='Collaborativefiltering'></a>Collaborative filtering
+
+In the last lecture, we created a simple model for collaborative filtering, first by taking as inputs the one hot encodings of the 9066 movies (in reality only the indices are passed to the lookup table `nn.Embedding`) and the 671 users, and then using the two 50-dimensional embeddings to create the score matrix, we also add a bias (using `nn.Embedding`) and a sigmoid x the range of the scores, the second approach is to use hidden layers, first the two embeddings are concatenated and then passed to two linear layers and outputs the score for a potential movie / user pair.
+
+###  1.1. <a name='Codesnippets'></a>Code snippets
 
 Here is how the dataset for collaborative filtering is written in fastai:
 
@@ -46,9 +72,9 @@ class CollabFilterDataset(Dataset):
         return CollabFilterLearner(self.get_data(val_idxs, bs), self.get_model(n_factors), **kwargs)
 ```
 
-### A deeper look
+###  1.2. <a name='Adeeperlook'></a>A deeper look
 
-#### Biases
+####  1.2.1. <a name='Biases'></a>Biases
 
 first let's take a look into the biases and how to interpret them, the created model is as follows:
 
@@ -89,8 +115,8 @@ and the results are:
  (-0.049677063, 'Nell (1994)'),]
 ```
 
-#### Embedding Interpretation
-First we need to reduce the dimension of the embeddings from 50-dimensions to an interpretable amount of dimension (3 in this case), we can use some dimensionnality reduction technique, we choose PCA giving us the main axes with the highest variance of the embedding vectors along them.
+####  1.2.2. <a name='EmbeddingInterpretation'></a>Embedding Interpretation
+First we need to reduce the dimension of the embeddings from 50-dimensions to an interpretable amount of dimension (3 in this case), we can use some dimensionality reduction technique, we choose PCA giving us the main axes with the highest variance of the embedding vectors along them.
 
 ```python
 from sklearn.decomposition import PCA
@@ -101,6 +127,7 @@ movie_pca = pca.fit(movie_emb.T).components_
 let's look at each dimension of the three dimension and try to interpret their meaning:
 
 **1st dimension:** we call it easy watching vs. serious
+
 ```python
 fac0 = movie_pca[0]
 movie_comp = [(f, movie_names[i]) for f,i in zip(fac0, topMovies)]
@@ -117,14 +144,14 @@ sorted(movie_comp, key=itemgetter(0), reverse=True)[:10]
 
 same for the other two dimensions (one seems to correlate with high production movies / CGI heavy and the thirs to the artistic and critically acclaimed ones)
 
-#### Reusing the embeddings
-As for rossman competition, where the winner used a very similar approach to win the competition, by having different embeddings for each categorical variables and then feeding them to a couple of linear layers.
+####  1.2.3. <a name='Reusingtheembeddings'></a>Reusing the embeddings
+As for Rossman competition, where the winner used a very similar approach to win the competition, by having different embeddings for each categorical variables and then feeding them to a couple of linear layers.
 
 <p align="center"> <img src="../figures/colaborative_filtering_rossman.png" width="500"> </p>
 
-And they then extracted only the embeddings and reused them in other machine learning techniques, and they observe that the performances of other techniques (KNNs, Random forests and gradient bosted machines) increasing significantly.
+And they then extracted only the embeddings and reused them in other machine learning techniques, and they observe that the performances of other techniques (KNNs, Random forests and gradient boosted machines) increasing significantly.
 
-The type of model used in this case called `MixedInputModel`, it is able to handle inputs consisting of both categorical and continuous variables, we give the model a list of the embedding sizes, the number of the continuous variables (will not be modified), the sized of the hidden layers and the output range. 
+The type of model used in this case called `MixedInputModel`, it is able to handle inputs consisting of both categorical and continuous variables, we give the model a list of the embedding sizes, the number of the continuous variables (will not be modified), the size of the hidden layers and the output range. 
 
 ```python
 def emb_init(x):
@@ -171,9 +198,9 @@ class MixedInputModel(nn.Module):
         return x
 ```
 
-So in the code above, we take all the categorical variables, passed them through the embeddings, concatenate all the embeddings and then also the continous variables, passed them through a set of liner layers, with batch norm and dropout in between, and then one final linear layer to get the correct number of ouputs.
+So in the code above, we take all the categorical variables, passed them through the embeddings, concatenate all the embeddings and then also add the continuous variables, passed them through a set of liner layers, with batch norm and dropout in between, and then one final linear layer to get the correct number of outputs.
 
-## SGD
+##  2. <a name='SGD'></a>SGD
 
 Let’s work on solving a simple case of Ax + b. If we can do this we can apply the technique to other problems as well.
 
@@ -195,7 +222,7 @@ def mse(y_hat, y): return ((y_hat - y) ** 2).mean()
 def mse_loss(a, b, x, y): return mse(lin(a,b,x), y)
 ```
 
-We can now generate some random data (pairs of x and y), and loop for a number of iterations, begining with a random intialization of a and b, and each step calculate the loss, computes the gradient of loss with respect to all Variables with `requires_grad=True`. after this call `a.grad` and `b.grad` will be Variables holding the gradient of the loss with respect to a and b respectively, so then we can update a and b using gradient descent (about the types: `a.data` and `b.data` are Tensors, `a.grad` and `b.grad` are Variables and a.grad.data and b.grad.data are Tensors).
+We can now generate some random data (pairs of x and y), and loop for a number of iterations, beginning with a random initialization of a and b, and each step calculate the loss, computes the gradient of loss with respect to all Variables with `requires_grad=True`. after this call `a.grad` and `b.grad` will be Variables holding the gradient of the loss with respect to a and b respectively, so then we can update a and b using gradient descent (about the types: `a.data` and `b.data` are Tensors, `a.grad` and `b.grad` are Variables and a.grad.data and b.grad.data are Tensors).
 
 ```python
 learning_rate = 1e-3
@@ -211,7 +238,7 @@ for t in range(10000):
     b.grad.data.zero_()
 ```
 
-Ploting an animation of the updates (we need to install ffmpeg first):
+Plotting an animation of the updates (we need to install ffmpeg first):
 
 ```python
 fig = plt.figure(dpi=100, figsize=(5, 4))
@@ -227,9 +254,9 @@ def animate(i):
 ani = animation.FuncAnimation(fig, animate, np.arange(0, 20), interval=100)
 ```
 
-## Recurrent Neural Network
+##  3. <a name='RecurrentNeuralNetwork'></a>Recurrent Neural Network
 
-### RNNs as Linear layers
+###  3.1. <a name='RNNsasLinearlayers'></a>RNNs as Linear layers
 
 First, let's began with a simple example, predicting the 4th char given the first 3 characters, first we're going to load a text of nietzsche, get all the unique characters, and add a `NULL` or empty character to the vocabulary. We'll use a character based model, these models generally yield better performances, but are very expensive computationnly, so when choosing between word and character based models, we must take into consideration both the performances and costs, and sometimes we might use a combination of the two (pair byte encoding).
 
@@ -263,7 +290,7 @@ x3 = np.stack(c3_dat)
 y = np.stack(c4_dat)
 ```
 
-#### The model
+####  3.1.1. <a name='Themodel'></a>The model
 We'll have three hidden layers, each one gets a character and the activations of the previous layers (the first one gets a zero vector), and weights between the hidden layer are the same (orrange arrow), and the same for the weights between the hidden and output (blue arrow) and input the hidden (green arrow), so we take the IDs of each character, convert them from one hot encodings to embeddings, and feed them to the RNNs in order, and finally take the last represenatation to ouput a probability density over the vocabulary:
 
 <p align="center"> <img src="../figures/rnn_character.png" width="400"> </p>
@@ -306,7 +333,7 @@ get_next(' th') # 'e'
 get_next('and') # ' '
 ```
 
-### Our first RNN:
+###  3.2. <a name='OurfirstRNN:'></a>Our first RNN:
 
 <p align="center"> <img src="../figures/rnn_8character.png" width="400"> </p>
 
@@ -363,7 +390,7 @@ class CharLoopConcatModel(nn.Module):
         return F.log_softmax(self.l_out(h), dim=-1)
 ```
 
-### RNN with PyTorch
+###  3.3. <a name='RNNwithPyTorch'></a>RNN with PyTorch
 
 Now, when implementing RNNs with torch, we'll directly get the for loop automatically and also the INP -> Hidden and H->H layers, and at each time step we'll get the hidden as output, and all we need to do is get the last hidden state and feed it to the output layer or get all the hidden states in case we have sequence to sequence types of predictions:
 
@@ -387,7 +414,7 @@ We have in this example a batch of 512 (512 sequences of 8 character (0-7) and t
 
 In PyTorch version, a hidden state is rank 3 tensor `h = torch.zeros(1, bs, n_hidden)` (in the previous version, it was rank 2 tensor). so the inputs are of shape  `(seq_len, batch, input_size)`, and `nn.RNN` gives as output all the hidden layers (in our case [8, 512, 256]) and the last hidden one ([1, 512, 256]).
 
-#### Test the model
+####  3.3.1. <a name='Testthemodel'></a>Test the model
 
 ```python
 def get_next_n(inp, n):
@@ -404,7 +431,7 @@ get_next_n('for thos', 40)
 
 This time, we loop n times calling get_next each time, and each time we will replace our input by removing the first character and adding the character we just predicted.
 
-### Multi-output
+###  3.4. <a name='Multi-output'></a>Multi-output
 
 Now at each time step we'll predict the next character, and to also reduce the redundacies and the computations:
 
@@ -445,9 +472,9 @@ def nll_loss_seq(inp, targ):
 
 Note : PyTorch does not generally actually shuffle the memory order when we do things like ‘transpose’, but instead it keeps some internal metadata to treat it as if it is transposed. When we transpose a matrix, PyTorch just updates the metadata . If we ever see an error that says `this tensor is not continuous` , add .contiguous() after it and error goes away.
 
-#### Gradient Explosion
+####  3.4.1. <a name='GradientExplosion'></a>Gradient Explosion
 
-self.rnn(inp, h) is a loop applying the same matrix multiply again and again. If that matrix multiply tends to increase the activations each time, we are effectively doing that to the pothe of 8 — we call this a gradient explosion. We want to make sure the initial l_hidden will not cause our activations on average to increase or decrease. one solution is to initilize the RNN matrix hidden to hidden weights with an indentity matrix :
+self.rnn(inp, h) is a loop applying the same matrix multiply again and again. If that matrix multiply tends to increase the activations each time, we are effectively doing that to the pothe of 8, we call this a gradient explosion. We want to make sure the initial l_hidden will not cause our activations on average to increase or decrease. one solution is to initilize the RNN matrix hidden to hidden weights with an indentity matrix :
 
 ```python
 m.rnn.weight_hh_l0.data.copy_(torch.eye(n_hidden))
@@ -455,7 +482,7 @@ m.rnn.weight_hh_l0.data.copy_(torch.eye(n_hidden))
 
 This was introduced by Geoffrey Hinton in "A Simple Way to Initialize Recurrent Networks of Rectified Linear Units".
 
-### References
+###  3.5. <a name='References'></a>References
 
 * https://forums.fast.ai/t/deeplearning-lecnotes6/8641
 * https://medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-6-de70d626976c

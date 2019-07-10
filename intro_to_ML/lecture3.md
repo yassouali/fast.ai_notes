@@ -82,7 +82,7 @@ Input: Trained model f, feature matrix X, target vector y, error measure L(y,f).
     - Calculate permutation feature importance FI_j= e_perm/e_orig. Alternatively, the difference can be used: FI_j = e_perm - e_orig.
 - Sort features by descending FI.
 
-In our case, this is done using the already avaible output in the trained random forest `m`.
+In our case, this is done using the already available output in the trained random forest `m`.
 
 ```python
 def rf_feat_importance(m, df):
@@ -95,7 +95,7 @@ def plot_fi(fi):
 plot_fi(fi[:30])
 ```
 
-And by displying the bar plot fot 30 most important features in our model we get:
+And by displying the bar plot for 30 most important features in our model we get:
 
 <p align="center"> <img src="../figures/feature_importance.png" width="600"> </p>
 

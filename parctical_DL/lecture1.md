@@ -1,5 +1,19 @@
+<!-- vscode-markdown-toc -->
+* 1. [Jupyter Notebook shortcuts](#JupyterNotebookshortcuts)
+* 2. [Looking at the data](#Lookingatthedata)
+	* 2.1. [Data transformations](#Datatransformations)
+	* 2.2. [References:](#References:)
 
-### Jupyter Notebook shortcuts
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+
+# Lecture 1: Image recognition
+
+##  1. <a name='JupyterNotebookshortcuts'></a>Jupyter Notebook tips
 
 Here is a list of shortcuts to use on a daily basis:
 
@@ -51,7 +65,7 @@ This command will map our local 8888 port to localhost:8888 on the remote machin
 
 To maintain an open connection / usage of our terminal without a closing of the connection, we can use Tmux / Screen / Boyubu.
 
-### Looking at the data
+##  2. <a name='Lookingatthedata'></a>Looking at the data
 
 As well as looking at the overall metrics, it's also a good idea to look at examples of each of:
 1. A few correct labels at random
@@ -82,19 +96,20 @@ def plots(ims, figsize=(12,6), rows=1, titles=None):
         sp.axis('Off')
         if titles is not None: sp.set_title(titles[i], fontsize=16)
         plt.imshow(ims[i])
-
+```
+```
 -> plot_val_with_title(rand_by_correct(True), "Correctly classified")
 -> plot_val_with_title(rand_by_correct(False), "Incorrectly classified")
 ```
 
 
-### Data transformations
+###  2.1. <a name='Datatransformations'></a>Data transformations
 
 These transformations can vary for each architecture but usually entail one or more of these:
 * resizing: each images gets resized to the input the network expects;
-* normalizing: data values are rescaled to values between 0 and 1; $y = \frac { x - x _ { \min } } { x _ { \max } - x _ { \min } }$
-* standardizing: data values are rescaled to a standard distribution with a mean of 0 and a standard deviation of 1; where μ is the mean and σ is the standard deviation. $y = \frac { x - \mu } { \sigma }$. where μ is the mean and σ is the standard deviation.
+* normalizing: data values are rescaled to values between 0 and 1; y = (x - xmin) / (xmax _ xmin)
+* standardizing: data values are rescaled to a standard distribution with a mean of 0 and a standard deviation of 1; where μ is the mean and σ is the standard deviation. y = (x - μ) / σ. where μ is the mean and σ is the standard deviation.
 
 
-### References:
+###  2.2. <a name='References:'></a>References:
 * [FastAi lecture 1 notes](https://www.zerotosingularity.com/blog/fast-ai-part-1-course-1-annotated-notes/)

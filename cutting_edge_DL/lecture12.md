@@ -1,6 +1,20 @@
-## Generative Adversarial Networks (GANs)
+# Lecture 12: Generative Adversarial Networks (GANs)
 
-### WGAN
+<!-- vscode-markdown-toc -->
+* 1. [WGAN](#WGAN)
+	* 1.1. [discriminator](#discriminator)
+	* 1.2. [Generator](#Generator)
+	* 1.3. [Training](#Training)
+* 2. [Cycle GaNs](#CycleGaNs)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+
+##  1. <a name='WGAN'></a>WGAN
 
 In this lecture we are going to focus on generative adversarial networks also known as GANs, and more Wasserstein GAN paper which was heavily influenced by the deep convolutional generative adversarial network (DCGaN).
 
@@ -12,7 +26,6 @@ The basic idea of GaNs, is an having two models, a generative model that generat
 
 So the main task is to create the models, which are going to be simple CNN networks, a classification network for the critic and a CNN with an encoding the decoding blocks for the generator, and the losses for both networks, training GaNs is quite difficult, and the real addition WGaN paper brings, is the new loss fuction and how to control the gradients to ensure training convergence.
 
-### WGaN
 We are going to the LSUN dataset classification dataset and use the bedroom category of images to create real images ones, so we are going to download the dataset, unzip it, and convert it to jpg files (using the `lsun-data.py` script):
 
 ```python
@@ -68,7 +81,7 @@ with CSV_PATH.open('w') as fo:
             fo.write(f'{f.relative_to(IMG_PATH)},0\n')
 ```
 
-Now we are going to create out convolutionnal models, for the cretic / descriminator and the generative model, first we're going to build a descriminator, it'll receive an image and outputs a probability of the image being real, so the output is a single number, we first construct a conv module, containing a convolution with or without a batch norm, and a non linearity, and the padding is calculating based on the stride and the size of the filter we've chosen.
+Now we are going to create out convolutional models, for the cretic / discriminator and the generative model, first we're going to build a discriminator, it'll receive an image and outputs a probability of the image being real, so the output is a single number, we first construct a conv module, containing a convolution with or without a batch norm, and a non linearity, and the padding is calculating based on the stride and the size of the filter we've chosen.
 
 ```python
 class ConvBlock(nn.Module):
@@ -84,7 +97,9 @@ class ConvBlock(nn.Module):
         return self.bn(x) if self.bn else x
 ```
 
-**Descriminator:** Now we can create out descriminator, the input dimensions of the image must be multiples of 16, so that with a succession of convolution with a stride of two, we can endup with a 4x4 volume; so we create a series of conv modules, each one with a convolutionnal kernel of size 4 and a stride of 2, and each times the number of channels is doubled (`cndf *= 2; csize /= 2`), until we endup with a 4x4xchannels feature maps, that we then fed into a 4x4 convolution with a single output channel and no stide, so the output is a 4x4x1 feature map, and we take the mean of these 16 values to get our prediction.
+###  1.1. <a name='discriminator'></a>discriminator
+
+Now we can create out discriminator, the input dimensions of the image must be multiples of 16, so that with a succession of convolution with a stride of two, we can endup with a 4x4 volume; so we create a series of conv modules, each one with a convolutional kernel of size 4 and a stride of 2, and each times the number of channels is doubled (`cndf *= 2; csize /= 2`), until we endup with a 4x4xchannels feature maps, that we then fed into a 4x4 convolution with a single output channel and no stide, so the output is a 4x4x1 feature map, and we take the mean of these 16 values to get our prediction.
 
 ```python
 class DCGAN_D(nn.Module):
@@ -112,16 +127,17 @@ class DCGAN_D(nn.Module):
         return self.final(x).mean(0).view(1)
 ```
 
-And to train the descriminator, given an existing generator, we can generate a set of images and label them as fake (say label 0), and then take some images from the LSUN dataset and label them as real, and train the model, but first we need to create out descriminator.
+And to train the discriminator, given an existing generator, we can generate a set of images and label them as fake (say label 0), and then take some images from the LSUN dataset and label them as real, and train the model, but first we need to create out discriminator.
 
-**Generator:**
+###  1.2. <a name='Generator'></a>Generator
+
 The generator takes as input a prior, which is a vector of randomly generated numbers, and outputz a picture of the same size as the LSUN dataset images, and the idea is that each time, with a random vector, we'll get a new generated image.
 
 First we'll create a deconvolution block, that upsamples the inputs given a specific kernel size, padding and a given stride, each element in the inputs is multiplied by the learned filters, and added to the inputs, and the stride is applied to the outputs this time, so that in the next step we'll add the results to the outputs after the given stride, this figure illustrates the procedure:
 
 <p align="center"> <img src="../figures/deconvolution.png" width="700"> </p>
 
-It is also called transposed convolution given that the deconvolution is the same as the calculations done in the backward step, this is a comprehensive guide to the convolution arithmitics [arxiv](https://arxiv.org/abs/1603.07285)
+It is also called transposed convolution given that the deconvolution is the same as the calculations done in the backward step, this is a comprehensive guide to the convolution arithmetics [arxiv](https://arxiv.org/abs/1603.07285)
 
 One problem with deconvolutions are the check board artifacts, this is due to the fact that if we have an odd filter, say 3x3 filter, at the end of deconvolution one in three pixels will have its values coming from two different convolution (added together), so their values will be greated, and this will create checkboard artifacts as seen in the figure bellow, this is explained is this [distill post](https://distill.pub/2016/deconv-checkerboard/).
 
@@ -166,7 +182,7 @@ class DCGAN_G(nn.Module):
     def forward(self, input): return F.tanh(self.features(input))
 ```
 
-We the create our model, we'll use a batch of 64 and an input of size 64, first we resize the images to 128 and then use transformation to get to size 64:
+We then create our model, we'll use a batch of 64 and an input of size 64, first we resize the images to 128 and then use transformation to get to size 64:
 
 ```python
 bs,sz,nz = 64,64,100
@@ -186,7 +202,9 @@ plt.imshow(md.trn_ds.denorm(x)[0])
 
 <p align="center"> <img src="../figures/sample_lsun.png" width="200"> </p>
 
-Now we'll create out two models, the generator and the descriminator, and also out noise generator, that output nz random vectors of size b, in our case, we create a noise matrix of size 4 x 100, or four random verctors of size 100 each, pass them through the generator to get an output of size 4x3x64x64, denoarmalize the outputs and display the four images, which will obviously be random given that our generator is untrained:
+###  1.3. <a name='Training'></a>Training
+
+Now we'll create out two models, the generator and the discriminator, and also out noise generator, that output nz random vectors of size b, in our case, we create a noise matrix of size 4 x 100, or four random vectors of size 100 each, pass them through the generator to get an output of size 4x3x64x64, denormalize the outputs and display the four images, which will obviously be random given that our generator is untrained:
 
 ```python
 # Models
@@ -216,12 +234,12 @@ Non, we go through the training loop:
 
 - We're setting our models into training mode,
 - creating an iterator over our real dataset,
-- We'll iterate over the batches, for each iteration of training for the generator, we'll do `d_iters` of training for the desriminator, generally `d_iters = 5`, but in the begining it doesn't make sence to train the generator if the discriminator can't recognize the fake images from the real ones, so we start by 100 iterations of training the discriminator, and then we'll equal `d_iters = 5`, but after 500 iterations `d_iters = 100`,
+- We'll iterate over the batches, for each iteration of training for the generator, we'll do `d_iters` of training for the desriminator, generally `d_iters = 5`, but in the beginning it doesn't make sence to train the generator if the discriminator can't recognize the fake images from the real ones, so we start by 100 iterations of training the discriminator, and then we'll equal `d_iters = 5`, but after 500 iterations `d_iters = 100`,
 - So to train the discriminator, we set its weights to trainable, and freeze the generator's weights,
 - We clamp the parameters of the discriminator following the WGaN paper,
 - Get a real image, and pass through the discriminator to get the real loss, and then get a vector of random values, create a fake image using the generator, and pass it through the discriminator to get the fake loss,
 - We zero the gradient with respect to the loss from the pytorch dynamic graph, and then calculate the new value of the loss: `lossD = real_loss-fake_loss`, calculate the new derivatives and update the weights,
-- After `d_iters` of training the discriminator, we now train the generator, we freeze the discriminator weights, zero out the gradients, and then pass the fake image created by the generator through the descriminator to get the generator's loss, we then calculate the gradients and update the weights.
+- After `d_iters` of training the discriminator, we now train the generator, we freeze the discriminator weights, zero out the gradients, and then pass the fake image created by the generator through the discriminator to get the generator's loss, we then calculate the gradients and update the weights.
 
 ```python
 def train(niter, first=True):
@@ -287,7 +305,7 @@ plt.imshow(gallery(faked, 8))
 
 <p align="center"> <img src="../figures/wgan_results.png" width="500"> </p>
 
-### Cycle GaNs
+##  2. <a name='CycleGaNs'></a>Cycle GaNs
 
 The idea of cycle gans, is to take an image X, and transform it into a new image Y using a mapping funcion G (i.e a generator), so for example, in the paper we want to turn a horse image X into a zebra image X, but we don't have a dateset pairs horse / zebra to train our model, for this we'll use GaNs with a new type of loss, called a cycle loss.
 
@@ -295,7 +313,7 @@ We'll have two generator, G turning horses X into zebras Y, and Y generator doin
 
 <p align="center"> <img src="../figures/cycle_gan.png" width="600"> </p>
 
-Ane the losses are expressed as follows, we have the GaN loss, in two terms, does the descriminator recognise a real image (log Dy), and a fake one created by the generator (1 - logDy (G)), and the consistency loss that compares the original image x / y to the recreated one generated by passing the original image through the two generators F(G(x)) / G(F(y)).
+Ane the losses are expressed as follows, we have the GaN loss, in two terms, does the discriminator recognise a real image (log Dy), and a fake one created by the generator (1 - logDy (G)), and the consistency loss that compares the original image x / y to the recreated one generated by passing the original image through the two generators F(G(x)) / G(F(y)).
 
 <p align="center"> <img src="../figures/cycle_gan_loss.png" width="600"> </p>
 

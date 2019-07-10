@@ -79,7 +79,7 @@ The first logical question, is how to find the best split of our data into two s
 * We need to pick a variable and the value to split on such that the two groups are as different to each other as possible and have simlilar elements internally.
 * To find the best variable, and the best values to split on for that variable, we can go through all the variables and all the possible values of the selected varaibles, we do a split and calculate the weighted average of the two resulting groups = MSE1 * samples/samples1 + MSE2 * samples/samples2, and then choose variables/value with the smallest error (note: the MSE of the root node, is naive model, aka predicitng the average).
 
-Right now, our decision tree has R² of 0.4. Let’s make it better by removing max_depth=3. By doing so, the training R² becomes 1 (as expected since each leaf node contains exactly one element) and validation R² is 0.73 — which is better than the shallow tree but not as good as we would like.
+Right now, our decision tree has R² of 0.4. Let’s make it better by removing max_depth=3. By doing so, the training R² becomes 1 (as expected since each leaf node contains exactly one element) and validation R² is 0.73, which is better than the shallow tree but not as good as we would like.
 
 
 ###  2.2. <a name='SideNote:UsingEntropytopickthenodes'></a>Side Note: Using Entropy to pick the nodes

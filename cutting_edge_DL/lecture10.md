@@ -1,12 +1,29 @@
-## Natural Language Processing
+<!-- vscode-markdown-toc -->
+* 1. [IMDb dataset](#IMDbdataset)
+* 2. [Data preprocessing](#Datapreprocessing)
+* 3. [Pre-training](#Pre-training)
+	* 3.1. [wikitext103 conversion](#wikitext103conversion)
+* 4. [Language model](#Languagemodel)
+	* 4.1. [A deeper look](#Adeeperlook)
+	* 4.2. [The language model](#Thelanguagemodel)
+	* 4.3. [Measuring accuracy](#Measuringaccuracy)
+* 5. [Text Classification](#TextClassification)
 
-In this lecture, which is a continuation of lesson 4, we'll try to use a similar approach we used in computer vision, which consisted of taking pre-trained models in image classification, and replace the head to adpat the output to our application, we'll do similar thing in NLP, we'll first train our model in language model setting on WikiTex dataset, fine tune it as a language model on a target dataset, in our case, we'll use text classification in IMDB, and then add a custom head for text classification, to train the custom head and then finetune the whole model with different leanring rates to avoid catastrophic forgeting.
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
 
-### IMDb dataset
+# Lecture 10: Natural Language Processing
 
-This is a dataset of movie reviews, containing positive and negative review (75 000 reveiws for training and 25 000 for classification, 50 000 of the training set are unlabeled) and some unlabeled examples, in lesson 4 we used torchtext, but this library is quite slow partly because it’s not doing parallel processing and partly it’s because it doesn’t remember what we did last time and it does it all over again from scratch, so in this lecture we'll a new library called `fastai.text`. `fastai.text` is a replacement for the combination of torchtext and `fastai.nlp`.
+In this lecture, which is a continuation of lesson 4, we'll try to use a similar approach we used in computer vision, which consisted of taking pre-trained models in image classification, and replace the head to adapat the output to our application, we'll do a similar thing in NLP, we'll first train our model in language model setting on WikiTex dataset, fine tune it as a language model on a target dataset, in our case, we'll use text classification in IMDB, and then add a custom head for text classification, to train the custom head and then fine-tune the whole model with different learning rates to avoid catastrophic forgetting.
 
-First we'll go through all the examples in three calsses (that are in folders of the same names) and add each one example and its label to the training and validation sets.
+##  1. <a name='IMDbdataset'></a>IMDb dataset
+
+This is a dataset of movie reviews, containing positive and negative (75 000 reviews for training and 25 000 for classification, 50 000 of the training set are unlabeled) and some unlabeled examples, in lesson 4 we used torchtext, but this library is quite slow partly because it’s not doing parallel processing and partly it’s because it doesn’t remember what we did last time and it does it all over again from scratch, so in this lecture we'll a new library called `fastai.text`. `fastai.text` is a replacement for the combination of torchtext and `fastai.nlp`.
+
+First we'll go through all the examples in three classes (that are in folders of the same names) and add each one example and its label to the training and validation sets.
 
 ```python
 CLASSES = ['neg', 'pos', 'unsup']
@@ -25,7 +42,6 @@ val_texts,val_labels = get_texts(PATH/'test')
 len(trn_texts),len(val_texts)
 # (75000, 25000)
 ```
-
 And we end up with there are 75,000 in train, 25,000 in test. 50,000 in the train set are unsupervised, and we won’t actually be able to use them when we get to the classification, the next step is to shuffle them with a random permutation (of the index only)
 
 ```python
@@ -83,11 +99,11 @@ df_trn.to_csv(LM_PATH/'train.csv', header=False, index=False)
 df_val.to_csv(LM_PATH/'test.csv', header=False, index=False)
 ```
 
-#### Data preprocessing
+##  2. <a name='Datapreprocessing'></a>Data preprocessing
 
-In data preprocessing, we need to start by tokenizing our corpus; **Tokenization** means at this stage, for a document (i.e. a movie review), we have set of words that we'd like to turn it into a list of tokens to give a standardized set. For example, `don’t` we want it to be `do` and `n’t`, we probably want full stop to be a token, and so forth. Tokenization is something that we passed off to a specific library such as NLTK or `spaCy`, we'll use spacy beacuse it is faster and easier to work with.
+In data preprocessing, we need to start by tokenizing our corpus; **Tokenization** means at this stage, for a document (i.e. a movie review), we have set of words that we'd like to turn it into a list of tokens to give a standardized set. For example, `don’t` we want it to be `do` and `n’t`, we probably want full stop to be a token, and so forth. Tokenization is something that we passed off to a specific library such as NLTK or `spaCy`, we'll use spacy because it is faster and easier to work with.
 
-First, we clean our corpus using regex to remove some uncessary character in the dataset, so we call the fixup function which replaces some weird characters that are quite common in some NLP datasets that need to be replaced
+First, we clean our corpus using regex to remove some unnecessary character in the dataset, so we call the fixup function which replaces some weird characters that are quite common in some NLP datasets that need to be replaced
 
 ```python
 re1 = re.compile(r'  +')
@@ -129,15 +145,15 @@ def get_all(df, n_lbls):
     return tok, labels
 ```
 
-First, we load the dataframes we saved, but this time we use a new parameter `chunksize`, this parameter is used in case we have big dataframe and it used to specify the number of rows per chunk to avoid loading them to the memory at once, and in this case, pandas will return an iterator over the data instead of the datafram data directly, giving us a chunck of the data at each iteration, and for this we use a function in which we iterate over the dataframe in the function `get_all` and call the function `get_texts` that will :
+First, we load the dataframes we saved, but this time we use a new parameter `chunksize`, this parameter is used in case we have big dataframe and it used to specify the number of rows per chunk to avoid loading them to the memory at once, and in this case, pandas will return an iterator over the data instead of the datafram data directly, giving us a chunk of the data at each iteration, and for this we use a function in which we iterate over the dataframe in the function `get_all` and call the function `get_texts` that will :
 
 <p align="center"> <img src="../figures/df_imdb.png" width="500"> </p>
 
 * First we load the labels and convert them into integers, which is the first column of our dataframe,
-* We add a beginning of stream (BOS) token (any particular strings as long as they don't appear in the corpus) to define the begining of the text, so that after concatenating all the text together, the model will still be able to detect the begining of a new article. And given that in some documents we have multiple field, say an intorduction, and abstract, so to differentiate between then we add a field token, and so first we add the first field (the second column after the label) with a field of 1, and then we add the rest of the field in the document, each one with a given number (2, 3, ...), in our case, we only have movie reviews, so we only have one field, and the loop will pas skiped, and then we apply the fixup function to all the elements.
-* And then we tokenize our text, since spacy does not provide a parallel/multicore version of the tokenizer, the fastai library adds this functionality. This parallel version (a wrapper over the spacy tokenizer) uses all the cores of the CPUs and runs much faster than the serial version of the spacy tokenizer, so we call `proc_all_mp` (process all multi processing, and before that we divide all the text into the number of the threads avaible in our CPU using `partition_by_cores`) of the fastAi implementation.
+* We add a beginning of stream (BOS) token (any particular strings as long as they don't appear in the corpus) to define the beginning of the text, so that after concatenating all the text together, the model will still be able to detect the beginning of a new article. And given that in some documents we have multiple field, say an introduction, and abstract, so to differentiate between then we add a field token, and so first we add the first field (the second column after the label) with a field of 1, and then we add the rest of the field in the document, each one with a given number (2, 3, ...), in our case, we only have movie reviews, so we only have one field, and the loop will pas skipped, and then we apply the fixup function to all the elements.
+* And then we tokenize our text, since spacy does not provide a parallel/multicore version of the tokenizer, the fastai library adds this functionality. This parallel version (a wrapper over the spacy tokenizer) uses all the cores of the CPUs and runs much faster than the serial version of the spacy tokenizer, so we call `proc_all_mp` (process all multi processing, and before that we divide all the text into the number of the threads available in our CPU using `partition_by_cores`) of the fastAi implementation.
 
-One additionnal trick, is the usage of a token specific to all caps word, so instead of having two different representation of the two words, one regular and an other which is all caps, we can simple lathe case all the words, and for the all caps words we can add a token `t_up`, so now we'll learn that each word that comes with `t_up` before is begin shouted (some other tricks are in the fastai implementation of Tokenizer).
+One additional trick, is the usage of a token specific to all caps word, so instead of having two different representation of the two words, one regular and an other which is all caps, we can simple lathe case all the words, and for the all caps words we can add a token `t_up`, so now we'll learn that each word that comes with `t_up` before is begin shouted (some other tricks are in the fastai implementation of Tokenizer).
 
 And then we save the results:
 
@@ -149,13 +165,13 @@ tok_trn = np.load(LM_PATH/'tmp'/'tok_trn.npy')
 tok_val = np.load(LM_PATH/'tmp'/'tok_val.npy')
 ```
 
-**Numericalizing  the tokens** the last thing we need to do is numericalize the token, this is done as follows:
+**Numericalizing  the tokens** the last thing we need to do is *numericalize* the token, this is done as follows:
 
 * We make a list of all the words that appear in corpus,
 * We keep only the frequent word (say the words that appear at least twice, given that it can be only a spelling mistake, and the bigger the vocabulary the more compitation / time we need), a vocabulary of size 60 000 is quite good,
 * We replace every word with its index into that list.
 
-This can be done with Counter class in python; giving us a list of all the unique item in a list with their counts, we create a counter by passing all the words in all the example in the training set (using to for loops), and then given a vocabulary size, we only keep 60 000 most commong words in the vocabulary with freaq > 2, and we add the padding and unkown tokken to replace the removed / unfrequent tokens, and we endup with a list items to tokens to numericalize the corpus.
+This can be done with Counter class in python; giving us a list of all the unique item in a list with their counts, we create a counter by passing all the words in all the example in the training set (using to for loops), and then given a vocabulary size, we only keep 60 000 most common words in the vocabulary with freaq > 2, and we add the padding and unknown token to replace the removed / infrequent tokens, and we endup with a list items to tokens to *numericalize* the corpus.
 
 ```python
 freq = Counter(p for o in tok_trn for p in o)
@@ -167,7 +183,7 @@ itos.insert(0, '_pad_')
 itos.insert(0, '_unk_')
 ```
 
-We can now go and use this list to create a mapping dict from tokens to numerical values (string to integer). Given that our vocabulary contains only 6000 tokens, and doesn't covert all the them, we need to assign to the words / token we don't find in the list the token `_unk_`, for this we can use a default dict with a lambda function returing 0 is the token is not found in the list, and use the dict to create our train the val sets.
+We can now go and use this list to create a mapping dict from tokens to numerical values (string to integer). Given that our vocabulary contains only 6000 tokens, and doesn't covert all the them, we need to assign to the words / token we don't find in the list the token `_unk_`, for this we can use a default dict with a lambda function returning 0 if the token is not found in the list, and use the dict to create our train and val sets.
 
 ```python
 stoi = collections.defaultdict(lambda:0, {v:k for k,v in enumerate(itos)})
@@ -190,13 +206,13 @@ itos = pickle.load(open(LM_PATH/'tmp'/'itos.pkl', 'rb'))
 
 Now the vocab size is 60,002 and our training language model has 90,000 documents in it.
 
-## Pre-training
+##  3. <a name='Pre-training'></a>Pre-training
 
-Just like in computer vision, we first start by pre-training the model to do image classification and then fine tune our model in down stream tasks, in NLP, we first start by pre-training on wikitext103 to do language modeling. So just like ImageNet allowed us to train things that recognize stuff that kind of looks like pictures, and we could use it on stuff that was nothing to do with ImageNet like satellite images. Why don’t we train a language model that’s good at English and then fine-tune it to be good at movie reviews (image classification).
+Just like in computer vision, we first start by pre-training the model to do image classification and then fine-tune our model in down stream tasks, in NLP, we first start by pre-training on `wikitext103` to do language modeling. So just like ImageNet allowed us to train things that recognize stuff that kind of looks like pictures, and we could use it on stuff that was nothing to do with ImageNet like satellite images. Why don’t we train a language model that’s good at English and then fine-tune it to be good at movie reviews (image classification).
 
-To pretrain our language model, we first start by using the wikitext dataset, Stephen Merity has already processed Wikipedia, found a subset of nearly the most of it, but throwing away the stupid little articles leaving bigger articles. He calls that wikitext103. Here are the pretrained language model pretrained by the fastai team: [link](http://files.fast.ai/models/wt103/), and now we can create the LSTM model, and load the pretrained weights on fine tune the model on IMBD.
+To pre-train our language model, we first start by using the wikitext dataset, Stephen Merity has already processed Wikipedia, found a subset of nearly the most of it, but throwing away the stupid little articles leaving bigger articles. He calls that wikitext103. Here are the pretrained language model pretrained by the fastai team: [link](http://files.fast.ai/models/wt103/), and now we can create the LSTM model, and load the pretrained weights on fine tune the model on IMBD.
 
-### wikitext103 conversion
+###  3.1. <a name='wikitext103conversion'></a>wikitext103 conversion
 
 So first we grab the wikitext models by the `wget -r` command, it will recursively grab the whole directory which has a few things in it, and create the variables holding the pre-trained language model path.
 
@@ -215,13 +231,13 @@ em_sz, nh, nl = 400, 1150, 3
 
 And now we can go ahead the load the wights using `torch.load`, and it return a dictionary containing the name of the layer and a tensor/array of those weights.
 
-The `map_location`argument gives us the possibility to remap the Tensor location at load time usingd. For example this will forcefully remap everything onto CPU: `torch.load('my_file.pt', map_location=lambda storage, location: 'cpu')`, that is not being used in our case.
+The `map_location` argument gives us the possibility to remap the Tensor location at load time. For example this will forcefully remap everything onto CPU: `torch.load('my_file.pt', map_location=lambda storage, location: 'cpu')`, that is not being used in our case.
 
 ```python
 wgts = torch.load(PRE_LM_PATH, map_location=lambda storage, loc: storage)
 ```
 
-Now the problem is that wikitext language model was built with a certain vocabulary which was not the same as ours. The IMDB vocabulary is not the same as wikitext103 model’s vocab. So we need to map one to the other. That’s simple with the dictonanry `itos` for the wikitext vocab, mapping the indices to the words.
+Now the problem is that wikitext language model was built with a certain vocabulary which was not the same as ours. The IMDB vocabulary is not the same as wikitext103 model’s vocab. So we need to map one to the other. That’s simple with the dictionary `itos` for the wikitext vocab, mapping the indices to the words.
 
 So first we can use `defaultdict` to do a reverse mapping, with a value -1 in when we access the dictionary, the key (or the word) we're looking for in the wikitext vocab is not there.
 
@@ -230,7 +246,7 @@ itos2 = pickle.load((PRE_PATH/'itos_wt103.pkl').open('rb'))
 stoi2 = collections.defaultdict(lambda:-1, {v:k for k,v in enumerate(itos2)})
 ```
 
-The objective is to create an embedding matrix of size (vocab size x emd size) for the IMDB model, containing zeros, and replace the rows with the weights of the wikitext model if it is present in the wikitext vocab, so first we start by retreiving the embedding matrix of the wikitext model (`0.encoder.weight`), we then go through every one of the words in our IMDb vocabulary, and we are going to look it up in `stoi2` (string-to-integer for the wikitext103 vocabulary) and see the word is also a part of the wikitext vocab, if it isn't not we'll get -1, and if it is we'll get an index `r` >= 0, and we will just set that row of the embedding matrix to the weight which was stored inside the named element `0.encoder.weight`, and for the words not in wikitext vocab, we set their embedding rows to the mean of all the rows.
+The objective is to create an embedding matrix of size (vocab size x emd size) for the IMDB model, containing zeros, and replace the rows with the weights of the wikitext model if it is present in the wikitext vocab, so first we start by retrieving the embedding matrix of the wikitext model (`0.encoder.weight`), we then go through every one of the words in our IMDb vocabulary, and we are going to look it up in `stoi2` (string-to-integer for the wikitext103 vocabulary) and see the word is also a part of the wikitext vocab, if it isn't not we'll get -1, and if it is we'll get an index `r` >= 0, and we will just set that row of the embedding matrix to the weight which was stored inside the named element `0.encoder.weight`, and for the words not in wikitext vocab, we set their embedding rows to the mean of all the rows.
 
 ```python
 enc_wgts = to_np(wgts['0.encoder.weight'])
@@ -242,7 +258,7 @@ for i,w in enumerate(itos):
     new_w[i] = enc_wgts[r] if r>=0 else row_m
 ```
 
-We will then replace the encoder weights with new_w turn into a tensor. In the AWD LSTM the decoder (the final layer that turns the prediction back into a vector of probabilites the size of the vocab) uses exactly the same weights (weight tying), so we copy them to the decoder as well. And given that we apply dropout to the embedding matrix, when saving the model, for some reson we end up with a whole new copy, so we do the same thing.
+We will then replace the encoder weights with new_w turn into a tensor. In the AWD LSTM the decoder (the final layer that turns the prediction back into a vector of probabilities the size of the vocab) uses exactly the same weights (weight tying), so we copy them to the decoder as well. And given that we apply dropout to the embedding matrix, when saving the model, for some reason we end up with a whole new copy, so we do the same thing.
 
 ```python
 wgts['0.encoder.weight'] = T(new_w)
@@ -251,11 +267,11 @@ wgts['1.decoder.weight'] = T(np.copy(new_w))
 # T() == torch.from_numpy()
 ```
 
-## Language model
+##  4. <a name='Languagemodel'></a>Language model
 
 Let’s create our language model. Basic approach we are going to use is we are going to concatenate all of the documents together into a single list of tokens of length 24,998,320. That is going to be what we pass in as a training set.
 
-And like we've seen in the lecture 4, after concatenating the whole documents together, we divide them into 64 (batch size) section, and each step in the training process we take a number of words from each section, the number of words we take equal to the size of BPTT (back propagation through time), and it varies form an iteration to another to add some randomness, and for each training step, the inpus are matrix of size 64 x BPTT, and the target and of the same size but with a one word offset to the left.
+And like we've seen in the lecture 4, after concatenating the whole documents together, we divide them into 64 (batch size) sections, and each step in the training process we take a number of words from each section, the number of words we take equal to the size of BPTT (back propagation through time), and it varies form an iteration to another to add some randomness, and for each training step, the inpus are matrix of size 64 x BPTT, and the target and of the same size but with a one word offset to the left.
 
 For training, as per usual, after creating the model, setting the dataloaders, loading the weights, creatin the optimizer and setting the dropout rates (for different layers in the model), we call `learner.fit`. We do a single epoch on the last layer which is the embedding layer, given that a lot of words were not found in the wikitext vocabulary, so we need to learn them, then we’ll start doing a few epochs of the full model.
 
@@ -282,7 +298,7 @@ learner.lr_find(start_lr=lrs/10, end_lr=lrs*10, linear=True)
 
 In lesson 4, we had the loss of 4.23 after 14 epochs. In this case, we have 4.12 loss after 1 epoch. So by pre-training on wikitext103, we have a better loss after 1 epoch than the best loss we got for the language model otherwise.
 
-### A deeper look
+###  4.1. <a name='Adeeperlook'></a>A deeper look
 
 Let's take a deeper look into the language model and dataloaders we're using, for tha dataloader:
 
@@ -333,15 +349,15 @@ class LanguageModelLoader():
 
     def get_batch(self, i, seq_len):
         source = self.data
-        # incase we're in the end of the data, so take the rest of the words
+        # in case we're in the end of the data, so take the rest of the words
         seq_len = min(seq_len, len(source) - 1 - i)
         # the targets are offset by one words and are flattened
         return source[i:i+seq_len], source[i+1:i+1+seq_len].view(-1)
 ```
 
-One cool trick in the dataloader above, in the randomization of the BPTT; which is taken from the AWD LSTM. Instead of always grabing 70 words for each epoch, and to add some form of data augmentation (like for batch shuffling in computer vision, which we can do in NLP given that the order of the words is important) we can randomly change the sequence length. So 95% of the time, we will use bptt (i.e. 70) but 5% of the time, we’ll use half that. Then the sequence length will be a normally distributed random number with that average and a standard deviation of 5, So the sequence length is seventy-ish and that means every time we go through, we are getting slightly different batches as a little bit of extra randomness.
+One cool trick in the dataloader above, in the randomization of the BPTT; which is taken from the AWD LSTM. Instead of always grabing 70 words for each epoch, and to add some form of data augmentation (like for batch shuffling in computer vision, which we cannot do in NLP given that the order of the words is important) we can randomly change the sequence length. So 95% of the time, we will use bptt (i.e. 70) but 5% of the time, we’ll use half that. Then the sequence length will be a normally distributed random number with that average and a standard deviation of 5, So the sequence length is seventy-ish and that means every time we go through, we are getting slightly different batches as a little bit of extra randomness.
 
-### The language model
+###  4.2. <a name='Thelanguagemodel'></a>The language model
 
 We are going to create a custom learner, a custom model data class, and a custom model class. 
 
@@ -378,7 +394,7 @@ class RNN_Learner(Learner):
         load_model(self.model[0], self.get_model_path(name))
 ```
 
-Now let's take look into `get_language_model`, the function that return the AWD LSTM model, we first create a RNN encoder with the parameter we already choose, ie.e, the size of the embedding matrix and the size of the hidden layers and their number, and the dropout rates, and then we create a decoder wich is a linear decoder (with the weights tied).
+Now let's take look into `get_language_model`, the function that return the AWD LSTM model, we first create a RNN encoder with the parameter we already choose, ie., the size of the embedding matrix and the size of the hidden layers and their number, and the dropout rates, and then we create a decoder wich is a linear decoder (with the weights tied).
 
 ```python
 def get_language_model(arch:Callable, vocab_sz:int, config:dict=None, drop_mult:float=1.):
@@ -404,7 +420,7 @@ class LinearDecoder(nn.Module):
         return result, raw_outputs, outputs
 ```
 
-And here is the implementation of the RNN encoder, or the AWD LSTM, we first create an embedding matrix, and then we call `EmbeddingDropout` to apply the input dropout to the weights of the embedding matrix, and then we create a number of lstm layer, the first one of size emb sz -> hidden sz, and middle layers of size hidden sz -> hidden sz and the last one hidden sz -> emb sz, with dropout in between the layers, and we also apply a weight droptou (drop connect) in which we delete some connection in between the rnn layers, we initialize the embedding weights and also create an dropout layers, that we also apply during traing and not just the init process, and then we can these layers in the forward function.
+And here is the implementation of the RNN encoder, or the AWD LSTM, we first create an embedding matrix, and then we call `EmbeddingDropout` to apply the input dropout to the weights of the embedding matrix, and then we create a number of lstm layers, the first one of size emb sz -> hidden sz, and middle layers of size hidden sz -> hidden sz and the last one hidden sz -> emb sz, with dropout in between the layers, and we also apply a weight droptout (drop connect) in which we delete some connection in between the rnn layers, we initialize the embedding weights and also create an dropout layers, that we also apply during traing and not just the init process, and then we can these layers in the forward function.
 
 ```python
 def dropout_mask(x, sz, dropout):
@@ -497,13 +513,13 @@ class RNN_Encoder(nn.Module):
         self.hidden = [(self.one_hidden(l), self.one_hidden(l)) for l in range(self.nlayers)]
 ```
 
-#### Measuring accuracy
+###  4.3. <a name='Measuringaccuracy'></a>Measuring accuracy
 
 Normally for language models, we look at at the perplexity which is just 2^(cross entropy). There is a lot of problems with comparing things based on cross entropy loss. and we can also look and the accuracy of the language model predictions.
 
-After training the language model on IMDB dataset, we can g ahead and save it to use it for classification, but no need to save the decoder, which only matters for the langauge model part, and we only need to use the RNN encoder and use its hidden states for text classification.
+After training the language model on IMDB dataset, we can go ahead and save it to use it for classification, but no need to save the decoder, which only matters for the langauge model part, and we only need to use the RNN encoder and use its hidden states for text classification.
 
-### Text Classification
+##  5. <a name='TextClassification'></a>Text Classification
 
 Now we'll use files we already saved for classification, the two dataloader we saved earlier with the classes text file, and also resue the same tokens and vocabulary we've used for the language model, and we also load the document (after the tokenization) and their labels (positive of negative).
 
@@ -556,12 +572,12 @@ class TextDataset(Dataset):
     def __len__(self): return len(self.x)
 ```
 
-And after creting the dataset, we need to turn it into a datalaoder, to turn it into a DataLoader, we simply pass the Dataset to the DataLoader constructor, and at each call we'll get a batch of data, we are going to pass an additinnal parameter, which is a sampler parameter and sampler is a class we are going to define that tells the data loader how to shuffle:
+And after creating the dataset, we need to turn it into a datalaoder, to turn it into a DataLoader, we simply pass the Dataset to the DataLoader constructor, and at each call we'll get a batch of data, we are going to pass an additinnal parameter, which is a sampler parameter and sampler is a class we are going to define that tells the data loader how to shuffle:
 
 * For validation set, we are going to define something that actually just sorts. It just deterministically sorts it so that all the shortest documents will be at the start, all the longest documents will be at the end, and that’s going to minimize the amount of padding.
 * For training sampler, we are going to create a sort-ish sampler which also sorts with a bit of randomness.
 
-SortSampler is class which has a length which is the length of the data source and has an iterator which is simply an iterator which goes through the data source sorted by length (which is passed in as key). For the SortishSampler, it basically does the same thing with a little bit of randomness, first we do a randompermutation divide the indices into sections of 50 * batchsize, and then we sort them based on their length (so the randomness comes from the fact we have 50 section, each one is sorted seperately instead of sorting the whole dataset), and then we place the largest sequence at the begining so that the dataloader detect the amoungt of padding to add the rest the sequences of the batch (which are shuffled a second time).
+SortSampler is class which has a length which is the length of the data source and has an iterator which is simply an iterator which goes through the data source sorted by length (which is passed in as key). For the SortishSampler, it basically does the same thing with a little bit of randomness, first we do a random permutation, divide the indices into sections of 50 * batchsize, and then we sort them based on their length (so the randomness comes from the fact we have 50 section, each one is sorted seperately instead of sorting the whole dataset), and then we place the largest sequence at the beginning so that the dataloader detect the amount of padding to add the rest the sequences of the batch (which are shuffled a second time).
 
 ```python
 class SortSampler(Sampler):
@@ -604,11 +620,11 @@ md = ModelData(PATH, trn_dl, val_dl)
 
 The last step is to create the model, we create a encoder of the same type we used ealier (AWD LSTM) and for the decoder, we're doing to take the last hidden activation of the LSTM layer and pass them to two linear layer (first of output of sie 50 and the lasy of 3 which are the number of prediction we want to make).
 
-There is some additionnal tricks used here for classification:
+There is some additional tricks used here for classification:
 
 * Concat pooling: for the decoder we use here (in `PoolingLinearClassifier`)  the mean pool and max pool of the three hidden activations of the last layers with the activation of the top layer and then concatenate them and pass them to the linear layer.
 
-* BPT3C: The main difference between `RNN_Encoder` used in language modelinga and `MultiBatchRNN` is that the normal RNN encoder for the language model, we could just do bptt chunk at a time, but for the classifier, we need to do the whole document. We need to do the whole movie review before we decide if it’s positive or negative. And the whole movie review can easily be 2,000 words long and we can’t fit 2.000 words worth of gradients in my GPU memory for every single one of my weights. So the idea to go through the whole sequence length one batch of bptt at a time and call super().forward (ie the RNN_Encoder) and grab its outputs and its activation and store them, and for the next call of the RNN encoder, the model is initialized with the final state of the previous batch. 
+* BPT3C: The main difference between `RNN_Encoder` used in language modeling and `MultiBatchRNN` is that the normal RNN encoder for the language model, we could just do bptt chunk at a time, but for the classifier, we need to do the whole document. We need to do the whole movie review before we decide if it’s positive or negative. And the whole movie review can easily be 2,000 words long and we can’t fit 2.000 words worth of gradients in my GPU memory for every single one of the weights. So the idea to go through the whole sequence length one batch of bptt at a time and call super().forward (ie the RNN_Encoder) and grab its outputs and its activation and store them, and for the next call of the RNN encoder, the model is initialized with the final state of the previous batch. 
 
 ```python
 class PoolingLinearClassifier(nn.Module):
@@ -654,5 +670,5 @@ m = get_rnn_classifer(bptt, 20*70, c, vs, emb_sz=em_sz, n_hid=nh,
 opt_fn = partial(optim.Adam, betas=(0.7, 0.99))
 ```
 
-And after creating our model, as per usual we are going to use discriminative learning rates for different layers, fine tune our model, and then unfreeze the whole model and training for some additionnal time, and we end up with state of art resutls in IMDB dataset, and the main advantage is that we can use only a small portion of the dataset to get competitive resutls.
+And after creating our model, as per usual we are going to use discriminative learning rates for different layers, fine tune our model, and then unfreeze the whole model and training for some additional time, and we end up with state of art resutls in IMDB dataset, and the main advantage is that we can use only a small portion of the dataset to get competitive resutls.
 
