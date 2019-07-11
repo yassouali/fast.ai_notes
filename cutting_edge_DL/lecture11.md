@@ -15,7 +15,7 @@
     - [4.1. <a name='Bidirectionnality'></a>Bidirectionnality](#41-a-nameBidirectionnalityaBidirectionnality)
     - [4.2. <a name='Teacherforcing'></a>Teacher forcing](#42-a-nameTeacherforcingaTeacher-forcing)
     - [4.3. <a name='AttentionMecanism'></a>Attention Mecanism](#43-a-nameAttentionMecanismaAttention-Mecanism)
-  - [5. <a name='Imageretrieval:DevisePaperhttp:papers.nips.ccpaper5204-devise-a-deep-visual-semantic-embedding-model.pdf'></a>Image retrieval: Devise Paper](#5-a-nameImageretrievalDevisePaperhttppapersnipsccpaper5204-devise-a-deep-visual-semantic-embedding-modelpdfaImage-retrieval-Devise-Paper)
+  - [5. <a name='Imageretrieval:DevisePaperhttp:papers.nips.ccpaper5204-devise-a-deep-visual-semantic-embedding-model.pdf'></a>Image retrieval: Devise](#5-a-nameImageretrievalDevisePaperhttppapersnipsccpaper5204-devise-a-deep-visual-semantic-embedding-modelpdfaImage-retrieval-Devise)
     - [5.1. <a name='Searchimagenetclassesusinganimage'></a>Search imagenet classes using an image](#51-a-nameSearchimagenetclassesusinganimageaSearch-imagenet-classes-using-an-image)
     - [5.2. <a name='Searchimagesusingaclass'></a>Search images using a class](#52-a-nameSearchimagesusingaclassaSearch-images-using-a-class)
     - [5.3. <a name='Imagetoimagesearch'></a>Image to image search](#53-a-nameImagetoimagesearchaImage-to-image-search)
@@ -58,7 +58,7 @@ We are going to try to translate French into English by following the standard n
 
 ###  3.1. <a name='Data'></a>Data
 
-As usual, we need `(x, y)` pairs. In this case, `x: French sentence`, `y: English sentence` which we will compare the model's predictions against. We need a lot of these tuples of French sentences with their equivalent English sentence, or what's called *parallel corpus*, which is harder to find than a corpus for a language model. For a language model, we just need text in some language, but for translation it's a bit harder, but there are some pretty good parallel corpus available for European languages. The European Parliament has every sentence in every European language. For French to English we can use some official canadian websites taht a have their content in both english and french, one of these datasets are the French/English parallel texts by Chris Callison-Burch: [link](http://www.statmt.org/wmt15/translation-task.html).
+As usual, we need `(x, y)` pairs. In this case, `x: French sentence`, `y: English sentence` which we will compare the model's predictions against. We need a lot of these tuples of French sentences with their equivalent English sentence, or what's called *parallel corpus*, which is harder to find than a corpus for a language model. For a language model, we just need text in some language, but for translation it's a bit harder, but there are some pretty good parallel corpus available for European languages. The European Parliament has every sentence in every European language. For French to English we can use some official canadian websites thata have their content in both english and french, one of these datasets are the French/English parallel texts by Chris Callison-Burch: [link](http://www.statmt.org/wmt15/translation-task.html).
 
 We then create the paths that hold the training data:
 
@@ -115,7 +115,7 @@ en_tok[0], fr_tok[0]
  ['qu’', 'est', '-ce', 'que', 'la', 'lumière', '?'])
 ```
 
-We can see that the results of tokenization in english and french are quite different, if we use the same tokenizer we'll miss a lot of information in french, given that the apostrophes are par of the words unlike english, on a side there is some language in which we can directly use a tokenizer, like Chinese, one solution is to use [sentence piece](https://github.com/google/sentencepiece) which splits things into arbitrary sub-word.
+We can see that the results of tokenization in english and french are quite different, if we use the same tokenizer we'll miss a lot of information in french, given that the apostrophes are partof the words unlike english, on a side there is some language in which we can directly use a tokenizer, like Chinese, one solution is to use [sentence piece](https://github.com/google/sentencepiece) which splits things into arbitrary sub-word.
 
 Now we need to turn the examples into numerical values, in which each token in the sentence is represented as its indices in the vocabulary, but first we'll only keep the small sentences, this is done by first finding the length of 90% of sentences, and then keeping the example that are less than 30 tokens, and save the results as pickles. 
 
@@ -183,7 +183,7 @@ fr_ids,fr_itos,fr_stoi = load_ids('fr')
 
 Now, in this case, we need to convert our word, from one hot representations into a embeddings, but in this case, unlink ULMFit we can first learn a language model (in both the target and source language) and then use its the embeddings in machine translation because we have so little examples, so we're going to use already available word vectors, like word2vec, glove, or fasttext, which is better than the previous two:
 
-`fasttext` Python library is not available in PyPI but here is a handy trick [35:03]. given tha the github repo has `setup.py` and `reqirements.txt` in it, we can just use `git+` at the start of the url, and then stick that in the pip install, import it and load the word vector for french and english, but first we need to download the fasttext word vectors for both language from the [Wiki](https://fasttext.cc/docs/en/pretrained-vectors.html), there are a text version and a binary version, the binary version is faster.
+`fasttext` Python library is not available in PyPI but here is a handy trick, given tha the github repo has `setup.py` and `reqirements.txt` in it, we can just use `git+` at the start of the url, and then stick that in the pip install, import it and load the word vector for french and english, but first we need to download the fasttext word vectors for both language from the [Wiki](https://fasttext.cc/docs/en/pretrained-vectors.html), there are a text version and a binary version, the binary version is faster.
 
 ```python
 ! pip install git+https://github.com/facebookresearch/fastText.git
@@ -540,7 +540,7 @@ Teacher forcing had 3.49 and now with nearly exactly the same thing but we’ve 
 
 And we see that there is a clear correlation between the position of the current word we want to translate, and the input words the decoder focuses on, which is totaly reasonable.
 
-##  5. <a name='Imageretrieval:DevisePaperhttp:papers.nips.ccpaper5204-devise-a-deep-visual-semantic-embedding-model.pdf'></a>Image retrieval: Devise [Paper](http://papers.nips.cc/paper/5204-devise-a-deep-visual-semantic-embedding-model.pdf)
+##  5. <a name='Imageretrieval:DevisePaperhttp:papers.nips.ccpaper5204-devise-a-deep-visual-semantic-embedding-model.pdf'></a>Image retrieval: [Devise](http://papers.nips.cc/paper/5204-devise-a-deep-visual-semantic-embedding-model.pdf)
 
 In this last section of the lecture, we're going to try to merge both world, the visual and textual representations, the objective here is to represent the images and their classes (words) in the same space / manifold, this way we can use a search word (given its word vector) and find the images with similar representation, that will hopefully be of the classes we're trying to find.
 
