@@ -18,7 +18,7 @@
 
 Super resolution is where we take a low resolution image (say 72x72) and upscale it to a larger image (say 288x288) trying to recreate a higher resolution image that looks as real as possible. This is a challenging thing to do because at 72x72, there’s not that much information about a lot of the details. The cool thing is that we are going to do it in a way as we tend to do with vision models which is not tied to the input size so we could then take this model and apply it to a 288 by 288 image and get something that’s four times bigger on each side so 16 times bigger than the original.
 
-One of the benefits of super-resolution, is that we don't need labeled data, we can simply create it as we like by down sampling a number of image, set them up as our inputs and then have the original sized images as our targets, we can do the same thing for a number of other tasks like de-skewing, colorization, noise-reduction, ect.
+One of the benefits of super-resolution, is that we don't need labeled data (this is a self-supervised task), we can simply create it as we like by down sampling a number of image, set them up as our inputs and then have the original sized images as our targets, we can do the same thing for a number of other tasks like de-skewing, colorization, noise-reduction, ect.
 
 In this lecture we're going to use imagenet as our dataset, so we're going to set our path to the correct location, and instead of using the all of image net (1M image), we're only going to use a subset of 2% (20 000 images) by creating an array of number of the size of imagenet, and only setting the indices < 0.02 to true and use it to index the filenames and labels:
 
@@ -108,7 +108,7 @@ For the model, we want our output image to be x scale larger that the input imag
 
 For our resnet blocks, we're going to use a number of tricks browed from [Enhanced Deep Residual Networks](https://arxiv.org/abs/1707.02921) paper
 
-<p align="center"> <img src="../figures/super_res_enhanced.png" width="400"> </p>
+<p align="center"> <img src="../figures/super_res_enhanced.png" width="900"> </p>
 
 First we are not going to use batch norm layers to help maintain a flow of information, and another trick is instead of having x + convs(x) in a resnet block, we going to scale down the activation by 0.1 or 0.2: x + convs(x) * 0.1, this was observed to help have more stable activation when training with very large batch size (e.g. 32k) where the activation are very large and the training becomes harder to control,
 
@@ -153,11 +153,11 @@ class SrResnet(nn.Module):
 
 For the upsampling, we can use a simple deconvolution or a bilinear convolution, but in both we'll endup with a lot of artifacts (more details [here](https://distill.pub/2016/deconv-checkerboard/)), and like we see here in the right most image:
 
-<p align="center"> <img src="../figures/artifacts.png" width="400"> </p>
+<p align="center"> <img src="../figures/artifacts.png" width="600"> </p>
 
 One alternative is to use pixel shuffle, in pixel shuffle introduced in [Real-Time Single Image and Video Super-Resolution](https://arxiv.org/abs/1609.05158), say we have H x W x C features and we want to sclae them with r, and endup with Hr x Wr x C, the solution with pixel shuffle is to use a convlution and extend the number of channels by a factor of r² and have an output of size! H x W x Cr², and then we can all the pixel from the channels, and reorger them, so for 1 x 1 x r² volume, we take the r² pixel and reorder them into r x r, and if we apply this to our feature we'll endup with Hr x Wr x C:
 
-<p align="center"> <img src="../figures/pixel_shuffle.png" width="400"> </p>
+<p align="center"> <img src="../figures/pixel_shuffle.png" width="800"> </p>
 
 But the problem of artifact still presists, because from the beginning each feature maps (of the r²) is initialized differently, so when we order them, in the r² pixels each one is comming from a different feature maps with a slightly different pixel values, so the same authors of the paper [Real-Time Single Image and Video Super-Resolution](https://arxiv.org/abs/1609.05158) found that the solution to this problem is to simply randomly intialize ont feature maps of the r² (more specifically the conv layer responsible of computing it), and copy the values for the other layers, this is detailed in: [checkerboard artifact free sub-pixel convolution](https://arxiv.org/abs/1707.02937).
 
@@ -212,7 +212,7 @@ show_img(preds,idx,normed=False)
 
 ### Perceptual loss
 
-We're going to use the same approach we saw in the last lecture, and use the VGG and its intermediate layers to calculate the loss between the generated features of the low and high resolution image, so first we are going to find all the layer before a max pool which are the layers `[5, 12, 22, 32, 42]`, in super-resolution, we not interested in features that are too much scaled down, so we're only going to use `5, 12, 22`, we then going to set VGG to eval mode and set all it parametrs require grandient field to false so we won't save any gradient in the forward pass:
+We're going to use the same approach we saw in the last lecture, and use the VGG and its intermediate layers to calculate the loss between the generated features of the low and high resolution image, so first we are going to find all the layer before a max pool which are the layers `[5, 12, 22, 32, 42]`, in super-resolution, we not interested in features that are too much scaled down, so we're only going to use `5, 12, 22`, we then going to set VGG to eval mode and set all it the parameters require grandient to false so we won't save any gradient in the forward pass and also use batch norm and dropout in the eval mode:
 
 ```python
 m_vgg = vgg16(True)
@@ -225,7 +225,7 @@ m_vgg = nn.Sequential(*vgg_layers).cuda().eval()
 set_trainable(m_vgg, False)
 ```
 
-Now se can set our forward hook for the layers we've selected using the same `SaveFeatures` class we've used ealier, and for the perceptual loss, we'll take an input downsampled image and a high resolution output image, a set of weigts (in our case three weights for the 3 layers we've selected) to weight the loss of each VGG features, so we pass the input through the VGG, copy its features stored in `SaveFeatures` instance, and then pass the target image and get its activation and calculate the L1 loss between the two activations with the weights we've passed, we also add L1 loss between the original images.
+Now now we can set our forward hooks for the layers we've selected using the same `SaveFeatures` class we've used ealier, and for the perceptual loss, we'll take an input downsampled image and a high resolution output image, a set of weights (in our case three weights for the 3 layers we've selected) to weight the loss of each VGG features, so we pass the input through the VGG, copy its features stored in `SaveFeatures` instance, and then pass the target image and get its activation and calculate the L1 loss between the two activations with the weights we've passed, we also add L1 loss between the original images.
 
 ```python
 class SaveFeatures():
@@ -300,7 +300,7 @@ And we end up with quite the good results:
 
 We can reuse the same approach with style transfer, but this time the perceptual loss will be calculated using the style and transfer losses like we did in the last lecture:
 
-<p align="center"> <img src="../figures/perceptual_loss.png" width="500"> </p>
+<p align="center"> <img src="../figures/perceptual_loss.png" width="600"> </p>
 
 The approach is quite similar to the one used in super resolution with some minor changes, first we're going to using conv 3x3 without any padding, but we'll start by padding the input image with 40 pixel using reflective mode, and for the losses we'll use the MSR for the content and the gram matrix (we use matrix multiply per batch) with all the features before the max pool layer and not only the first three like super resolution:
 
